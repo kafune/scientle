@@ -20,7 +20,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # env
+.env
 .env*.local
+
+# prisma client gerado (recriado no build)
+/lib/generated
 
 # typescript
 *.tsbuildinfo

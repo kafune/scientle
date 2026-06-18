@@ -1,23 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { saveGameResult } from "@/app/actions/game";
+import { getUserStats } from "@/app/actions/stats";
 import { Scientist } from "@/data/scientists";
 import {
+  buildShareText,
   compareGuess,
   findScientist,
+  gameDayKey,
   getDailyScientist,
   getRandomScientist,
   GuessResult,
   MAX_GUESSES,
+  puzzleNumber,
   searchScientists,
-  todayKey,
 } from "@/lib/game";
+import { GameStats, recordLocalResult } from "@/lib/stats";
+import AuthButton from "./AuthButton";
 import GuessTable from "./GuessTable";
 import ScientistImage from "./ScientistImage";
 
 type Mode = "daily" | "unlimited";
 
 export default function Game() {
+  const { data: session } = useSession();
   const [mode, setMode] = useState<Mode>("daily");
 
   // Alvo: derivado da data no modo diário; sorteado no modo prática.
@@ -29,6 +37,8 @@ export default function Game() {
   const [query, setQuery] = useState("");
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [hydrated, setHydrated] = useState(false);
+  const [stats, setStats] = useState<GameStats | null>(null);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Sorteia o alvo do modo prática no cliente (evita mismatch de hidratação).
@@ -37,7 +47,7 @@ export default function Game() {
     if (!unlimitedTarget) setUnlimitedTarget(getRandomScientist());
   }, [unlimitedTarget]);
 
-  const dailyStorageKey = `spotle-cientifico:daily:${todayKey()}`;
+  const dailyStorageKey = `spotle-cientifico:daily:${gameDayKey()}`;
 
   // Restaura o progresso do desafio diário.
   useEffect(() => {
@@ -63,6 +73,60 @@ export default function Game() {
   const won = guesses.some((g) => g.isWin);
   const lost = !won && guesses.length >= MAX_GUESSES;
   const over = won || lost;
+
+  // Ao terminar o desafio diário, registra o resultado nas estatísticas (1x por dia).
+  // Anônimo: localStorage. Logado: salva no banco e usa as stats do banco.
+  useEffect(() => {
+    if (mode !== "daily" || !over || !hydrated) return;
+    const local = recordLocalResult({
+      dayKey: gameDayKey(),
+      puzzleNumber: puzzleNumber(),
+      won,
+      guessCount: guesses.length,
+    });
+    setStats(local);
+
+    if (session?.user) {
+      (async () => {
+        try {
+          await saveGameResult({
+            won,
+            guessNames: guesses.map((g) => g.scientist.name),
+          });
+          const dbStats = await getUserStats();
+          if (dbStats) setStats(dbStats);
+        } catch {
+          /* falha de rede/servidor não pode quebrar o jogo */
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [over, mode, hydrated, session]);
+
+  async function handleShare() {
+    const url =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://spotle-cientifico";
+    const text = buildShareText({
+      guesses,
+      won,
+      streak: stats?.currentStreak ?? 0,
+      avg: stats?.avgGuesses ?? null,
+      url,
+    });
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      /* usuário cancelou ou compartilhamento indisponível */
+    }
+  }
 
   const tried = useMemo(
     () => new Set(guesses.map((g) => g.scientist.name)),
@@ -135,6 +199,9 @@ export default function Game() {
   return (
     <main className="app">
       <header className="header">
+        <div className="topbar">
+          <AuthButton />
+        </div>
         <h1 className="title">
           Spotle <span className="dot">Científico</span>
         </h1>
@@ -160,7 +227,9 @@ export default function Game() {
 
       <div className="status-bar">
         <span className="when">
-          {mode === "daily" ? `Desafio de ${todayKey()}` : "Cientista aleatório"}
+          {mode === "daily"
+            ? `Cientista #${puzzleNumber()}`
+            : "Cientista aleatório"}
         </span>
         <span className="count">
           Tentativa {Math.min(guesses.length + (over ? 0 : 1), MAX_GUESSES)} de{" "}
@@ -243,7 +312,38 @@ export default function Game() {
               Jogar novamente
             </button>
           ) : (
-            <p className="subtitle">Volte amanhã para um novo desafio!</p>
+            <>
+              {stats && (
+                <div className="stats">
+                  <div className="stat">
+                    <span className="stat-num">🔥 {stats.currentStreak}</span>
+                    <span className="stat-label">Sequência</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-num">{stats.maxStreak}</span>
+                    <span className="stat-label">Recorde</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-num">
+                      {stats.avgGuesses != null
+                        ? stats.avgGuesses.toFixed(1)
+                        : "—"}
+                    </span>
+                    <span className="stat-label">Média</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-num">{stats.wins}</span>
+                    <span className="stat-label">Vitórias</span>
+                  </div>
+                </div>
+              )}
+              <button className="btn" onClick={handleShare}>
+                {copied ? "Copiado! ✅" : "Compartilhar resultado"}
+              </button>
+              <p className="subtitle">
+                Volte às 21h (horário de Brasília) para um novo cientista!
+              </p>
+            </>
           )}
         </div>
       )}

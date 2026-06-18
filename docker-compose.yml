@@ -1,10 +1,54 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: spotle
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: spotle
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotle -d spotle"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Aplica as migrations uma vez (usa o estágio builder, que tem o Prisma CLI +
+  # schema engine + node_modules completo) e encerra. O app espera concluir.
+  migrate:
+    build:
+      context: .
+      target: builder
+    image: spotle-cientifico-migrate:latest
+    command: ["bunx", "prisma", "migrate", "deploy"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://spotle:${POSTGRES_PASSWORD}@db:5432/spotle?schema=public
+    restart: "no"
+
   app:
     build: .
     image: spotle-cientifico:latest
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      DATABASE_URL: postgresql://spotle:${POSTGRES_PASSWORD}@db:5432/spotle?schema=public
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: ${AUTH_URL}
+      AUTH_TRUST_HOST: "true"
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
     # Só escuta no localhost da VPS; o nginx do host faz o proxy + SSL.
     ports:
       - "127.0.0.1:3000:3000"
+
+volumes:
+  db-data:

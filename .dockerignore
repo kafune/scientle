@@ -11,4 +11,6 @@ README*.md
 npm-debug.log*
 *.tsbuildinfo
 .DS_Store
+.env
 .env*.local
+lib/generated

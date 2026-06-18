@@ -100,14 +100,55 @@ function hashString(str: string): number {
   return hash >>> 0;
 }
 
-// Data UTC no formato YYYY-MM-DD.
+// Fuso e horário do reset diário. O "dia de jogo" vai das 21h às 21h de São Paulo:
+// às 21h um novo cientista é sorteado. Usamos Intl com timezone fixo para não
+// depender do fuso do servidor (o container roda em UTC).
+const GAME_TZ = "America/Sao_Paulo";
+const RESET_HOUR = 21;
+const DAY_MS = 86_400_000;
+// Época do jogo: o puzzle de 2024-01-01 (dia de jogo) é o #1. Ajustável.
+const PUZZLE_EPOCH = Date.UTC(2024, 0, 1);
+
+// Componentes de data/hora no fuso de São Paulo.
+function spParts(date: Date) {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: GAME_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const p = Object.fromEntries(
+    fmt.formatToParts(date).map((x) => [x.type, x.value]),
+  );
+  // Alguns ambientes formatam meia-noite como "24"; normaliza para 0.
+  const hour = p.hour === "24" ? 0 : Number(p.hour);
+  return { y: Number(p.year), m: Number(p.month), d: Number(p.day), h: hour };
+}
+
+// Data UTC no formato YYYY-MM-DD (mantido para compatibilidade).
 export function todayKey(date = new Date()): string {
   return date.toISOString().slice(0, 10);
 }
 
-// Cientista do dia: determinístico a partir da data (igual para todos).
+// Chave do "dia de jogo" (YYYY-MM-DD): às 21h de SP avança para o dia seguinte.
+export function gameDayKey(date = new Date()): string {
+  const { y, m, d, h } = spParts(date);
+  let ms = Date.UTC(y, m - 1, d);
+  if (h >= RESET_HOUR) ms += DAY_MS;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+// Número sequencial do puzzle (ex.: #1053), determinístico a partir da época.
+export function puzzleNumber(date = new Date()): number {
+  const ms = Date.parse(gameDayKey(date) + "T00:00:00Z");
+  return Math.floor((ms - PUZZLE_EPOCH) / DAY_MS) + 1;
+}
+
+// Cientista do dia: determinístico a partir do dia de jogo (igual para todos).
 export function getDailyScientist(date = new Date()): Scientist {
-  const index = hashString(todayKey(date)) % SCIENTISTS.length;
+  const index = hashString(gameDayKey(date)) % SCIENTISTS.length;
   return SCIENTISTS[index];
 }
 
@@ -141,4 +182,42 @@ export function searchScientists(
   return SCIENTISTS.filter(
     (s) => !exclude.has(s.name) && normalize(s.name).includes(q),
   ).slice(0, limit);
+}
+
+// --- Compartilhamento estilo Metazooa: um quadrado por palpite ---
+
+// Quadrado colorido pela proximidade do palpite (6 atributos comparados).
+export function proximityEmoji(g: GuessResult): string {
+  if (g.isWin) return "🟩";
+  const cells = [g.field, g.birthYear, g.nationality, g.gender, g.award, g.alive];
+  const score = cells.reduce(
+    (s, c) => s + (c.match === "correct" ? 1 : c.match === "close" ? 0.5 : 0),
+    0,
+  );
+  if (score >= 3.5) return "🟨"; // quente
+  if (score >= 2) return "🟧"; // morno
+  return "🟥"; // frio
+}
+
+export interface ShareOptions {
+  guesses: GuessResult[];
+  won: boolean;
+  streak: number;
+  avg: number | null;
+  url: string;
+}
+
+// Monta o texto compartilhável no estilo Metazooa.
+export function buildShareText(opts: ShareOptions): string {
+  const n = puzzleNumber();
+  const squares = opts.guesses.map(proximityEmoji).join("");
+  const head = `🔬 Cientista #${n} 🧪`;
+  const line = opts.won
+    ? `Acertei em ${opts.guesses.length} ${
+        opts.guesses.length === 1 ? "tentativa" : "tentativas"
+      }!`
+    : `X/${MAX_GUESSES} — não consegui hoje 😢`;
+  const avg = opts.avg != null ? ` · Média: ${opts.avg.toFixed(1)}` : "";
+  const stats = `🔥 ${opts.streak}${avg}`;
+  return `${head}\n${line}\n${squares}\n${stats}\n${opts.url}\n#spotlecientifico`;
 }
