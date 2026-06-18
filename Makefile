@@ -5,7 +5,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down build rebuild restart logs logs-app logs-caddy ps shell clean
+.PHONY: help up down build rebuild restart logs ps shell clean
 
 help: ## Lista os alvos disponíveis
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -26,14 +26,8 @@ rebuild: ## Rebuilda e reinicia só o app (após mudanças no código)
 restart: ## Reinicia todos os serviços
 	$(COMPOSE) restart
 
-logs: ## Acompanha os logs de todos os serviços
+logs: ## Acompanha os logs do app
 	$(COMPOSE) logs -f
-
-logs-app: ## Acompanha os logs do app
-	$(COMPOSE) logs -f app
-
-logs-caddy: ## Acompanha os logs do Caddy (útil p/ ver emissão do SSL)
-	$(COMPOSE) logs -f caddy
 
 ps: ## Mostra o status dos containers
 	$(COMPOSE) ps
@@ -41,5 +35,5 @@ ps: ## Mostra o status dos containers
 shell: ## Abre um shell no container do app
 	$(COMPOSE) exec app sh
 
-clean: ## Para tudo e remove volumes (APAGA os certificados SSL!)
+clean: ## Para tudo e remove volumes
 	$(COMPOSE) down -v
