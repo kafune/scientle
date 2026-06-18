@@ -1,0 +1,12 @@
+# Caddy faz o SSL automático via Let's Encrypt (HTTP-01).
+# Requer que spotle.kafune.xyz aponte (A/AAAA) para o IP da VPS
+# e que as portas 80 e 443 estejam liberadas.
+
+spotle.kafune.xyz {
+	# Email usado pelo Let's Encrypt para avisos de expiração (troque pelo seu).
+	tls erisvaldoverissimo1978@gmail.com
+
+	encode zstd gzip
+
+	reverse_proxy app:3000
+}
