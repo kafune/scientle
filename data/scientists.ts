@@ -153,4 +153,10 @@ export const SCIENTISTS: Scientist[] = [
   { name: "Vera Rubin", field: "Astronomia", birthYear: 1928, nationality: "EUA", gender: "F", award: "Nenhum", alive: false },
   { name: "Rachel Carson", field: "Biologia", birthYear: 1907, nationality: "EUA", gender: "F", award: "Nenhum", alive: false },
   { name: "Tycho Brahe", field: "Astronomia", birthYear: 1546, nationality: "Dinamarca", gender: "M", award: "Nenhum", alive: false },
+
+  // Professores (homenagem) — sem foto, exibidos como avatar de monograma.
+  { name: "Leo Testoni", field: "Física", birthYear: 1979, nationality: "Brasil", gender: "M", award: "Nenhum", alive: true },
+  { name: "Arthur Biasotto", field: "Física", birthYear: 2000, nationality: "Brasil", gender: "M", award: "Nenhum", alive: true },
+  { name: "Juliana de Lemos", field: "Biologia", birthYear: 2000, nationality: "Brasil", gender: "F", award: "Nenhum", alive: true },
+  { name: "Amanda Lanzotti", field: "Química", birthYear: 1994, nationality: "Brasil", gender: "F", award: "Nenhum", alive: true },
 ];

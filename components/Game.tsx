@@ -29,7 +29,8 @@ export default function Game() {
   const [mode, setMode] = useState<Mode>("daily");
 
   // Alvo: derivado da data no modo diário; sorteado no modo prática.
-  const dailyTarget = useMemo(() => getDailyScientist(), []);
+  // O diário é resolvido por fetch para permitir o override secreto do servidor.
+  const [dailyTarget, setDailyTarget] = useState<Scientist | null>(null);
   const [unlimitedTarget, setUnlimitedTarget] = useState<Scientist | null>(null);
   const target = mode === "daily" ? dailyTarget : unlimitedTarget;
 
@@ -47,11 +48,34 @@ export default function Game() {
     if (!unlimitedTarget) setUnlimitedTarget(getRandomScientist());
   }, [unlimitedTarget]);
 
+  // Resolve o cientista do dia: aplica o override secreto do servidor se houver;
+  // em qualquer falha, cai no sorteio determinístico padrão (jogo nunca quebra).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let resolved = getDailyScientist();
+      try {
+        const res = await fetch("/api/daily", { cache: "no-store" });
+        if (res.ok) {
+          const data: { name: string | null } = await res.json();
+          const override = data.name ? findScientist(data.name) : undefined;
+          if (override) resolved = override;
+        }
+      } catch {
+        /* offline/erro: usa o sorteio padrão */
+      }
+      if (!cancelled) setDailyTarget(resolved);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const dailyStorageKey = `spotle-cientifico:daily:${gameDayKey()}`;
 
-  // Restaura o progresso do desafio diário.
+  // Restaura o progresso do desafio diário (só após o alvo do dia resolver).
   useEffect(() => {
-    if (mode !== "daily" || !hydrated) return;
+    if (mode !== "daily" || !hydrated || !dailyTarget) return;
     try {
       const saved = localStorage.getItem(dailyStorageKey);
       if (saved) {
@@ -68,7 +92,7 @@ export default function Game() {
       setGuesses([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, hydrated]);
+  }, [mode, hydrated, dailyTarget]);
 
   const won = guesses.some((g) => g.isWin);
   const lost = !won && guesses.length >= MAX_GUESSES;
