@@ -74,7 +74,7 @@ export const SCIENTIST_IMAGES: Record<string, string> = {
   "Tycho Brahe": "/scientists/tycho-brahe.jpg",
 
   // Professores (homenagem) — fotos adicionadas manualmente.
-  "Leo Testoni": "/scientists/leo-testoni.jpg",
+  "Leonardo André Testoni": "/scientists/leo-testoni.jpg",
   "Arthur Biasotto": "/scientists/arthur-biasotto.jpg",
   "Juliana de Lemos": "/scientists/juliana-de-lemos.jpg",
   "Amanda Lanzotti": "/scientists/amanda-lanzotti.jpg",

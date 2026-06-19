@@ -26,7 +26,10 @@ export interface GuessResult {
   isWin: boolean;
 }
 
-export const MAX_GUESSES = 8;
+export const MAX_GUESSES = 20;
+
+// Cada dica revela um atributo do alvo e custa 3 tentativas.
+export const HINT_COST = 3;
 
 // Tolerância em anos para a pista "amarela" do nascimento.
 const YEAR_CLOSE_RANGE = 25;
@@ -182,6 +185,27 @@ export function searchScientists(
   return SCIENTISTS.filter(
     (s) => !exclude.has(s.name) && normalize(s.name).includes(q),
   ).slice(0, limit);
+}
+
+// --- Sistema de dicas: revela atributos do alvo em ordem (geral -> específico) ---
+
+export interface Hint {
+  label: string;
+  value: string;
+}
+
+export function buildHints(target: Scientist): Hint[] {
+  return [
+    { label: "Área", value: target.field },
+    { label: "País", value: target.nationality },
+    { label: "Gênero", value: target.gender === "M" ? "Masculino" : "Feminino" },
+    { label: "Status", value: target.alive ? "Vivo" : "Falecido" },
+    { label: "Prêmio", value: target.award },
+    {
+      label: "Década de nascimento",
+      value: `${Math.floor(target.birthYear / 10) * 10}s`,
+    },
+  ];
 }
 
 // --- Compartilhamento estilo Metazooa: um quadrado por palpite ---

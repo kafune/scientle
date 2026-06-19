@@ -11,22 +11,38 @@ function Tile({
   result,
   value,
   flag,
+  hint,
 }: {
   label: string;
   result: CellResult;
   value: React.ReactNode;
   flag?: string;
+  hint?: string;
 }) {
   const arrow =
     result.direction === "up" ? "↑" : result.direction === "down" ? "↓" : null;
   return (
-    <div className={`tile ${result.match}`}>
+    <div
+      className={`tile ${result.match}${hint ? " has-hint" : ""}`}
+      tabIndex={hint ? 0 : undefined}
+      aria-label={hint ? `${label}. ${hint}` : undefined}
+    >
+      {hint && (
+        <span className="tile-cue" aria-hidden="true">
+          ?
+        </span>
+      )}
       <div className="tile-label">{label}</div>
       <div className="tile-value">
         {flag && <span className="flag">{flag}</span>}
         <span>{value}</span>
         {arrow && <span className="tarrow">{arrow}</span>}
       </div>
+      {hint && (
+        <span className="tile-hint" role="note">
+          {hint}
+        </span>
+      )}
     </div>
   );
 }
@@ -40,8 +56,18 @@ function Card({ g }: { g: GuessResult }) {
         <span className="guess-name">{s.name}</span>
       </div>
       <div className="tiles">
-        <Tile label="Área" result={g.field} value={s.field} />
-        <Tile label="Nascimento" result={g.birthYear} value={s.birthYear} />
+        <Tile
+          label="Área"
+          result={g.field}
+          value={s.field}
+          hint="Amarelo: mesma grande área (exatas, formais ou vida)."
+        />
+        <Tile
+          label="Nascimento"
+          result={g.birthYear}
+          value={s.birthYear}
+          hint="Amarelo: nascimento a até 25 anos de distância. ↑/↓ indica se o alvo nasceu depois/antes."
+        />
         <Tile
           label="País"
           result={g.nationality}
@@ -49,7 +75,12 @@ function Card({ g }: { g: GuessResult }) {
           flag={COUNTRY_FLAG[s.nationality]}
         />
         <Tile label="Gênero" result={g.gender} value={genderLabel(s.gender)} />
-        <Tile label="Prêmio" result={g.award} value={s.award} />
+        <Tile
+          label="Prêmio"
+          result={g.award}
+          value={s.award}
+          hint="Amarelo: ambos têm um prêmio Nobel, mas de categorias diferentes."
+        />
         <Tile
           label="Status"
           result={g.alive}

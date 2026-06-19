@@ -258,6 +258,7 @@ body {
 }
 
 .tile {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -265,6 +266,76 @@ body {
   padding: 10px 12px;
   border-radius: var(--radius);
   min-height: 66px;
+}
+
+.tile.has-hint {
+  cursor: help;
+  outline: none;
+}
+
+/* Pista sutil de que há explicação ao passar o mouse / tocar. */
+.tile-cue {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.45;
+}
+
+.tile.has-hint:hover .tile-cue,
+.tile.has-hint:focus .tile-cue {
+  opacity: 0.9;
+}
+
+/* Tooltip explicando o critério do amarelo — escondido por padrão. */
+.tile-hint {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: 210px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  z-index: 20;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  transition: opacity 0.13s ease, transform 0.13s ease;
+}
+
+/* Setinha do tooltip. */
+.tile-hint::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border);
+}
+
+.tile.has-hint:hover .tile-hint,
+.tile.has-hint:focus .tile-hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .tile-label {
@@ -404,6 +475,71 @@ body {
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
+}
+
+.hints {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0 4px;
+}
+
+.hint-btn {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hint-btn:hover:not(:disabled) {
+  border-color: var(--close);
+}
+
+.hint-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hint-cost {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.hint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+
+.hint-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--close);
+  border-radius: var(--radius);
+}
+
+.hint-key {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hint-val {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--close);
 }
 
 .legend {

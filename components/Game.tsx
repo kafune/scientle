@@ -6,6 +6,7 @@ import { saveGameResult } from "@/app/actions/game";
 import { getUserStats } from "@/app/actions/stats";
 import { Scientist } from "@/data/scientists";
 import {
+  buildHints,
   buildShareText,
   compareGuess,
   findScientist,
@@ -13,6 +14,7 @@ import {
   getDailyScientist,
   getRandomScientist,
   GuessResult,
+  HINT_COST,
   MAX_GUESSES,
   puzzleNumber,
   searchScientists,
@@ -35,12 +37,15 @@ export default function Game() {
   const target = mode === "daily" ? dailyTarget : unlimitedTarget;
 
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
+  const [hintsUsed, setHintsUsed] = useState(0);
   const [query, setQuery] = useState("");
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const [stats, setStats] = useState<GameStats | null>(null);
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const hintsStorageKey = `spotle-cientifico:daily-hints:${gameDayKey()}`;
 
   // Sorteia o alvo do modo prática no cliente (evita mismatch de hidratação).
   useEffect(() => {
@@ -88,15 +93,40 @@ export default function Game() {
       } else {
         setGuesses([]);
       }
+      const savedHints = localStorage.getItem(hintsStorageKey);
+      setHintsUsed(savedHints ? Number(savedHints) || 0 : 0);
     } catch {
       setGuesses([]);
+      setHintsUsed(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated, dailyTarget]);
 
+  // Cada dica custa HINT_COST tentativas (penalidade somada aos palpites).
+  const hints = useMemo(() => (target ? buildHints(target) : []), [target]);
+  const revealedHints = hints.slice(0, hintsUsed);
+  const penalty = hintsUsed * HINT_COST;
+  const usedCount = guesses.length + penalty;
+  const remaining = MAX_GUESSES - usedCount;
+
   const won = guesses.some((g) => g.isWin);
-  const lost = !won && guesses.length >= MAX_GUESSES;
+  const lost = !won && usedCount >= MAX_GUESSES;
   const over = won || lost;
+
+  const canHint = !over && !!target && hintsUsed < hints.length && remaining > HINT_COST;
+
+  function useHint() {
+    if (!canHint) return;
+    const next = hintsUsed + 1;
+    setHintsUsed(next);
+    if (mode === "daily") {
+      try {
+        localStorage.setItem(hintsStorageKey, String(next));
+      } catch {
+        /* ignora indisponibilidade de storage */
+      }
+    }
+  }
 
   // Ao terminar o desafio diário, registra o resultado nas estatísticas (1x por dia).
   // Anônimo: localStorage. Logado: salva no banco e usa as stats do banco.
@@ -209,12 +239,16 @@ export default function Game() {
     setMode(m);
     setQuery("");
     setActiveSuggestion(0);
-    if (m === "unlimited") setGuesses([]);
+    if (m === "unlimited") {
+      setGuesses([]);
+      setHintsUsed(0);
+    }
   }
 
   function playAgain() {
     setUnlimitedTarget(getRandomScientist());
     setGuesses([]);
+    setHintsUsed(0);
     setQuery("");
     setActiveSuggestion(0);
     inputRef.current?.focus();
@@ -256,7 +290,7 @@ export default function Game() {
             : "Cientista aleatório"}
         </span>
         <span className="count">
-          Tentativa {Math.min(guesses.length + (over ? 0 : 1), MAX_GUESSES)} de{" "}
+          Tentativa {Math.min(usedCount + (over ? 0 : 1), MAX_GUESSES)} de{" "}
           {MAX_GUESSES}
         </span>
       </div>
@@ -306,6 +340,42 @@ export default function Game() {
           </div>
         )}
       </div>
+
+      {!over && (
+        <div className="hints">
+          <button
+            className="hint-btn"
+            onClick={useHint}
+            disabled={!canHint}
+            title={
+              hintsUsed >= hints.length
+                ? "Todas as dicas reveladas"
+                : remaining <= HINT_COST
+                  ? "Tentativas insuficientes para uma dica"
+                  : `Revela um atributo do cientista e custa ${HINT_COST} tentativas`
+            }
+          >
+            💡 Dica (−{HINT_COST} tentativas)
+          </button>
+          {hintsUsed > 0 && (
+            <span className="hint-cost">
+              {hintsUsed} {hintsUsed === 1 ? "dica usada" : "dicas usadas"} ·
+              −{penalty} tentativas
+            </span>
+          )}
+        </div>
+      )}
+
+      {revealedHints.length > 0 && (
+        <div className="hint-list">
+          {revealedHints.map((h) => (
+            <div className="hint-item" key={h.label}>
+              <span className="hint-key">{h.label}</span>
+              <span className="hint-val">{h.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {guesses.length > 0 && <GuessTable guesses={guesses} />}
 
