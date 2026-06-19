@@ -10,7 +10,8 @@ export type Field =
   | "Medicina"
   | "Astronomia"
   | "Computação"
-  | "Engenharia";
+  | "Engenharia"
+  | "Educação";
 
 export type Gender = "M" | "F";
 
@@ -42,6 +43,7 @@ export const FIELD_GROUP: Record<Field, string> = {
   Computação: "formais",
   Biologia: "vida",
   Medicina: "vida",
+  Educação: "humanas",
 };
 
 // Bandeira (emoji) de cada país, exibida no tile de nacionalidade.
@@ -69,6 +71,7 @@ export const COUNTRY_FLAG: Record<string, string> = {
   China: "🇨🇳",
   Austrália: "🇦🇺",
   Irã: "🇮🇷",
+  "Nova Zelândia": "🇳🇿",
 };
 
 // Prêmios da família Nobel — usados para a pista "amarela" (mesma família).
@@ -159,4 +162,35 @@ export const SCIENTISTS: Scientist[] = [
   { name: "Arthur Biasotto", field: "Física", birthYear: 2000, nationality: "Brasil", gender: "M", award: "Nenhum", alive: true },
   { name: "Juliana de Lemos", field: "Biologia", birthYear: 2000, nationality: "Brasil", gender: "F", award: "Nenhum", alive: true },
   { name: "Amanda Lanzotti", field: "Química", birthYear: 1994, nationality: "Brasil", gender: "F", award: "Nenhum", alive: true },
+
+  // Cientistas e educadores brasileiros (César Lattes já consta acima).
+  { name: "Oscar Sala", field: "Física", birthYear: 1922, nationality: "Itália", gender: "M", award: "Nenhum", alive: false },
+  { name: "Mario Schenberg", field: "Física", birthYear: 1914, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
+  { name: "José Leite Lopes", field: "Física", birthYear: 1918, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
+  { name: "Paulo Freire", field: "Educação", birthYear: 1921, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
+  { name: "Abrahão de Moraes", field: "Astronomia", birthYear: 1917, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
+  { name: "Elisa Frota Pessoa", field: "Física", birthYear: 1921, nationality: "Brasil", gender: "F", award: "Nenhum", alive: false },
+  { name: "Amélia Império Hamburger", field: "Física", birthYear: 1932, nationality: "Brasil", gender: "F", award: "Nenhum", alive: false },
+
+  // Mais nomes para variedade (dados verificados).
+  { name: "Wilhelm Röntgen", field: "Física", birthYear: 1845, nationality: "Alemanha", gender: "M", award: "Nobel de Física", alive: false },
+  { name: "Heinrich Hertz", field: "Física", birthYear: 1857, nationality: "Alemanha", gender: "M", award: "Nenhum", alive: false },
+  { name: "J.J. Thomson", field: "Física", birthYear: 1856, nationality: "Reino Unido", gender: "M", award: "Nobel de Física", alive: false },
+  { name: "Hendrik Lorentz", field: "Física", birthYear: 1853, nationality: "Países Baixos", gender: "M", award: "Nobel de Física", alive: false },
+  { name: "Ernest Rutherford", field: "Física", birthYear: 1871, nationality: "Nova Zelândia", gender: "M", award: "Nobel de Química", alive: false },
+  { name: "Fritz Haber", field: "Química", birthYear: 1868, nationality: "Alemanha", gender: "M", award: "Nobel de Química", alive: false },
+  { name: "Glenn Seaborg", field: "Química", birthYear: 1912, nationality: "EUA", gender: "M", award: "Nobel de Química", alive: false },
+  { name: "Stephanie Kwolek", field: "Química", birthYear: 1923, nationality: "EUA", gender: "F", award: "Nenhum", alive: false },
+  { name: "Robert Koch", field: "Medicina", birthYear: 1843, nationality: "Alemanha", gender: "M", award: "Nobel de Medicina", alive: false },
+  { name: "Edward Jenner", field: "Medicina", birthYear: 1749, nationality: "Reino Unido", gender: "M", award: "Nenhum", alive: false },
+  { name: "Frederick Banting", field: "Medicina", birthYear: 1891, nationality: "Canadá", gender: "M", award: "Nobel de Medicina", alive: false },
+  { name: "Rita Levi-Montalcini", field: "Medicina", birthYear: 1909, nationality: "Itália", gender: "F", award: "Nobel de Medicina", alive: false },
+  { name: "Jonas Salk", field: "Medicina", birthYear: 1914, nationality: "EUA", gender: "M", award: "Nenhum", alive: false },
+  { name: "William Herschel", field: "Astronomia", birthYear: 1738, nationality: "Reino Unido", gender: "M", award: "Nenhum", alive: false },
+  { name: "Caroline Herschel", field: "Astronomia", birthYear: 1750, nationality: "Reino Unido", gender: "F", award: "Nenhum", alive: false },
+  { name: "Henrietta Swan Leavitt", field: "Astronomia", birthYear: 1868, nationality: "EUA", gender: "F", award: "Nenhum", alive: false },
+  { name: "Annie Jump Cannon", field: "Astronomia", birthYear: 1863, nationality: "EUA", gender: "F", award: "Nenhum", alive: false },
+  { name: "Évariste Galois", field: "Matemática", birthYear: 1811, nationality: "França", gender: "M", award: "Nenhum", alive: false },
+  { name: "David Hilbert", field: "Matemática", birthYear: 1862, nationality: "Alemanha", gender: "M", award: "Nenhum", alive: false },
+  { name: "John McCarthy", field: "Computação", birthYear: 1927, nationality: "EUA", gender: "M", award: "Prêmio Turing", alive: false },
 ];

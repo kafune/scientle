@@ -6,16 +6,18 @@ import { saveGameResult } from "@/app/actions/game";
 import { getUserStats } from "@/app/actions/stats";
 import { Scientist } from "@/data/scientists";
 import {
-  buildHints,
   buildShareText,
   compareGuess,
   findScientist,
   gameDayKey,
   getDailyScientist,
+  getHints,
   getRandomScientist,
   GuessResult,
-  HINT_COST,
+  hintPenalty,
   MAX_GUESSES,
+  MAX_HINTS,
+  nextHintCost,
   puzzleNumber,
   searchScientists,
 } from "@/lib/game";
@@ -102,18 +104,24 @@ export default function Game() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated, dailyTarget]);
 
-  // Cada dica custa HINT_COST tentativas (penalidade somada aos palpites).
-  const hints = useMemo(() => (target ? buildHints(target) : []), [target]);
+  // Dicas custam de forma crescente (3 → 5 → 7), somadas como penalidade.
+  const hints = useMemo(() => (target ? getHints(target) : []), [target]);
   const revealedHints = hints.slice(0, hintsUsed);
-  const penalty = hintsUsed * HINT_COST;
+  const penalty = hintPenalty(hintsUsed);
   const usedCount = guesses.length + penalty;
   const remaining = MAX_GUESSES - usedCount;
+  const upcomingCost = nextHintCost(hintsUsed);
 
   const won = guesses.some((g) => g.isWin);
   const lost = !won && usedCount >= MAX_GUESSES;
   const over = won || lost;
 
-  const canHint = !over && !!target && hintsUsed < hints.length && remaining > HINT_COST;
+  const canHint =
+    !over &&
+    !!target &&
+    hintsUsed < MAX_HINTS &&
+    upcomingCost !== null &&
+    remaining > upcomingCost;
 
   function useHint() {
     if (!canHint) return;
@@ -348,19 +356,22 @@ export default function Game() {
             onClick={useHint}
             disabled={!canHint}
             title={
-              hintsUsed >= hints.length
-                ? "Todas as dicas reveladas"
-                : remaining <= HINT_COST
-                  ? "Tentativas insuficientes para uma dica"
-                  : `Revela um atributo do cientista e custa ${HINT_COST} tentativas`
+              hintsUsed >= MAX_HINTS
+                ? "Todas as dicas já reveladas"
+                : upcomingCost !== null && remaining <= upcomingCost
+                  ? "Tentativas insuficientes para esta dica"
+                  : "Revela uma dica sobre o cientista"
             }
           >
-            💡 Dica (−{HINT_COST} tentativas)
+            {upcomingCost !== null
+              ? `💡 Dica (−${upcomingCost} tentativas)`
+              : "💡 Sem mais dicas"}
           </button>
           {hintsUsed > 0 && (
             <span className="hint-cost">
-              {hintsUsed} {hintsUsed === 1 ? "dica usada" : "dicas usadas"} ·
-              −{penalty} tentativas
+              {hintsUsed}/{MAX_HINTS}{" "}
+              {hintsUsed === 1 ? "dica usada" : "dicas usadas"} · −{penalty}{" "}
+              tentativas
             </span>
           )}
         </div>
@@ -368,10 +379,10 @@ export default function Game() {
 
       {revealedHints.length > 0 && (
         <div className="hint-list">
-          {revealedHints.map((h) => (
-            <div className="hint-item" key={h.label}>
-              <span className="hint-key">{h.label}</span>
-              <span className="hint-val">{h.value}</span>
+          {revealedHints.map((h, i) => (
+            <div className="hint-item" key={i}>
+              <span className="hint-key">Dica {i + 1}</span>
+              <span className="hint-val">{h}</span>
             </div>
           ))}
         </div>

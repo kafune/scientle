@@ -4,6 +4,7 @@ import {
   Scientist,
   SCIENTISTS,
 } from "@/data/scientists";
+import { SCIENTIST_HINTS } from "@/data/hints";
 
 // Estado de uma célula de pista.
 export type Match = "correct" | "close" | "wrong";
@@ -28,8 +29,21 @@ export interface GuessResult {
 
 export const MAX_GUESSES = 20;
 
-// Cada dica revela um atributo do alvo e custa 3 tentativas.
-export const HINT_COST = 3;
+// Cada cientista tem até 3 dicas (fraca, média, forte), com custo crescente.
+export const HINT_COSTS = [3, 5, 7];
+export const MAX_HINTS = HINT_COSTS.length;
+
+// Penalidade total (em tentativas) por ter usado `n` dicas.
+export function hintPenalty(n: number): number {
+  let sum = 0;
+  for (let i = 0; i < n && i < HINT_COSTS.length; i++) sum += HINT_COSTS[i];
+  return sum;
+}
+
+// Custo da próxima dica a revelar (null quando não há mais).
+export function nextHintCost(used: number): number | null {
+  return used < HINT_COSTS.length ? HINT_COSTS[used] : null;
+}
 
 // Tolerância em anos para a pista "amarela" do nascimento.
 const YEAR_CLOSE_RANGE = 25;
@@ -187,24 +201,18 @@ export function searchScientists(
   ).slice(0, limit);
 }
 
-// --- Sistema de dicas: revela atributos do alvo em ordem (geral -> específico) ---
+// --- Sistema de dicas: 3 dicas biográficas próprias (fraca -> média -> forte) ---
 
-export interface Hint {
-  label: string;
-  value: string;
+// Dicas específicas do cientista; cai num fallback genérico se faltar entrada.
+export function getHints(target: Scientist): string[] {
+  return SCIENTIST_HINTS[target.name] ?? fallbackHints(target);
 }
 
-export function buildHints(target: Scientist): Hint[] {
+function fallbackHints(t: Scientist): string[] {
   return [
-    { label: "Área", value: target.field },
-    { label: "País", value: target.nationality },
-    { label: "Gênero", value: target.gender === "M" ? "Masculino" : "Feminino" },
-    { label: "Status", value: target.alive ? "Vivo" : "Falecido" },
-    { label: "Prêmio", value: target.award },
-    {
-      label: "Década de nascimento",
-      value: `${Math.floor(target.birthYear / 10) * 10}s`,
-    },
+    `Atua em ${t.field}`,
+    `Trabalhou em ${t.nationality}`,
+    `Nasceu nos anos ${Math.floor(t.birthYear / 10) * 10}`,
   ];
 }
 
