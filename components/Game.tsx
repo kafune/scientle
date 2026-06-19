@@ -169,7 +169,7 @@ export default function Game() {
     const url =
       typeof window !== "undefined"
         ? window.location.origin
-        : "https://spotle-cientifico";
+        : "https://spotle.kafune.xyz";
     const text = buildShareText({
       guesses,
       won,
@@ -269,10 +269,32 @@ export default function Game() {
           <AuthButton />
         </div>
         <h1 className="title">
-          Spotle <span className="dot">Científico</span>
+          <span className="logo-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="34" height="34">
+              <g fill="none" stroke="currentColor" strokeWidth="4">
+                <ellipse cx="32" cy="32" rx="22" ry="9" />
+                <ellipse
+                  cx="32"
+                  cy="32"
+                  rx="22"
+                  ry="9"
+                  transform="rotate(60 32 32)"
+                />
+                <ellipse
+                  cx="32"
+                  cy="32"
+                  rx="22"
+                  ry="9"
+                  transform="rotate(120 32 32)"
+                />
+              </g>
+              <circle cx="32" cy="32" r="6" fill="currentColor" />
+            </svg>
+          </span>
+          Scient<span className="dot">le</span>
         </h1>
         <p className="subtitle">
-          Adivinhe o cientista misterioso em até {MAX_GUESSES} tentativas.
+          Adivinhe o cientista do dia em até {MAX_GUESSES} tentativas.
         </p>
       </header>
 

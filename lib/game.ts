@@ -251,5 +251,5 @@ export function buildShareText(opts: ShareOptions): string {
     : `X/${MAX_GUESSES} — não consegui hoje 😢`;
   const avg = opts.avg != null ? ` · Média: ${opts.avg.toFixed(1)}` : "";
   const stats = `🔥 ${opts.streak}${avg}`;
-  return `${head}\n${line}\n${squares}\n${stats}\n${opts.url}\n#spotlecientifico`;
+  return `${head}\n${line}\n${squares}\n${stats}\n${opts.url}\n#scientle`;
 }
