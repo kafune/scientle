@@ -1,13 +1,14 @@
 "use server";
 
 import { auth } from "@/auth";
-import { gameDayKey, MAX_GUESSES, puzzleNumber } from "@/lib/game";
+import { resolveDailyTarget } from "@/lib/daily";
+import { findScientist, gameDayKey, MAX_GUESSES, puzzleNumber } from "@/lib/game";
 import { prisma } from "@/lib/prisma";
 
-// Salva o resultado do dia (gated por sessão). O servidor decide dia/puzzle
-// (anti-trapaça) e o primeiro envio do dia é imutável.
+// Salva o resultado do dia (gated por sessão). O servidor é a fonte de verdade:
+// resolve o alvo do dia, valida os palpites e RECALCULA vitória/contagem — nunca
+// confia no `won`/contagem reportados pelo cliente. O 1º envio do dia é imutável.
 export async function saveGameResult(input: {
-  won: boolean;
   guessNames: string[];
 }): Promise<{ saved: boolean }> {
   const session = await auth();
@@ -15,8 +16,27 @@ export async function saveGameResult(input: {
 
   const userId = session.user.id;
   const dayKey = gameDayKey();
-  const guessNames = input.guessNames.slice(0, MAX_GUESSES);
-  const guessCount = Math.min(input.guessNames.length, MAX_GUESSES);
+  const target = resolveDailyTarget();
+
+  // Mantém só palpites que correspondem a cientistas reais, na ordem enviada,
+  // sem duplicatas, limitado ao máximo de tentativas.
+  const seen = new Set<string>();
+  const validNames: string[] = [];
+  for (const raw of input.guessNames) {
+    const s = findScientist(raw);
+    if (!s || seen.has(s.name)) continue;
+    seen.add(s.name);
+    validNames.push(s.name);
+    if (validNames.length >= MAX_GUESSES) break;
+  }
+
+  // Vitória e contagem derivadas no servidor a partir dos palpites validados.
+  const winIndex = validNames.indexOf(target.name);
+  const won = winIndex !== -1;
+  const guessCount = won
+    ? winIndex + 1
+    : Math.min(validNames.length, MAX_GUESSES);
+  const guessNames = won ? validNames.slice(0, winIndex + 1) : validNames;
 
   await prisma.gameResult.upsert({
     where: { userId_dayKey: { userId, dayKey } },
@@ -25,7 +45,7 @@ export async function saveGameResult(input: {
       userId,
       dayKey,
       puzzleNumber: puzzleNumber(),
-      won: input.won,
+      won,
       guessCount,
       guessNames,
     },

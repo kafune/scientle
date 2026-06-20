@@ -6,6 +6,16 @@ function genderLabel(g: "M" | "F") {
   return g === "M" ? "Masculino" : "Feminino";
 }
 
+// Ícone + rótulo textual do estado, para não depender só da cor (daltonismo).
+const MATCH_META: Record<
+  CellResult["match"],
+  { icon: string; label: string }
+> = {
+  correct: { icon: "✓", label: "correto" },
+  close: { icon: "≈", label: "parcial" },
+  wrong: { icon: "✕", label: "incorreto" },
+};
+
 function Tile({
   label,
   result,
@@ -21,18 +31,25 @@ function Tile({
 }) {
   const arrow =
     result.direction === "up" ? "↑" : result.direction === "down" ? "↓" : null;
+  const meta = MATCH_META[result.match];
   return (
     <div
       className={`tile ${result.match}${hint ? " has-hint" : ""}`}
       tabIndex={hint ? 0 : undefined}
-      aria-label={hint ? `${label}. ${hint}` : undefined}
+      aria-label={hint ? `${label}, ${meta.label}. ${hint}` : undefined}
     >
       {hint && (
         <span className="tile-cue" aria-hidden="true">
           ?
         </span>
       )}
-      <div className="tile-label">{label}</div>
+      <div className="tile-label">
+        <span className="tile-status" aria-hidden="true">
+          {meta.icon}
+        </span>
+        {label}
+        <span className="sr-only"> — {meta.label}</span>
+      </div>
       <div className="tile-value">
         {flag && <span className="flag">{flag}</span>}
         <span>{value}</span>
