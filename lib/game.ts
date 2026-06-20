@@ -5,6 +5,7 @@ import {
   SCIENTISTS,
 } from "@/data/scientists";
 import { SCIENTIST_HINTS } from "@/data/hints";
+import { SCIENTIST_BIOS } from "@/data/bios";
 
 // Estado de uma célula de pista.
 export type Match = "correct" | "close" | "wrong";
@@ -214,6 +215,12 @@ function fallbackHints(t: Scientist): string[] {
     `Trabalhou em ${t.nationality}`,
     `Nasceu nos anos ${Math.floor(t.birthYear / 10) * 10}`,
   ];
+}
+
+// Biografia curta exibida ao fim do jogo (o que estudou e pelo que é
+// reconhecido). Retorna "" quando não há bio cadastrada.
+export function getBio(target: Scientist): string {
+  return SCIENTIST_BIOS[target.name] ?? "";
 }
 
 // --- Compartilhamento estilo Metazooa: um quadrado por palpite ---

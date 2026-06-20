@@ -10,8 +10,7 @@ export type Field =
   | "Medicina"
   | "Astronomia"
   | "Computação"
-  | "Engenharia"
-  | "Educação";
+  | "Engenharia";
 
 export type Gender = "M" | "F";
 
@@ -43,7 +42,6 @@ export const FIELD_GROUP: Record<Field, string> = {
   Computação: "formais",
   Biologia: "vida",
   Medicina: "vida",
-  Educação: "humanas",
 };
 
 // Bandeira (emoji) de cada país, exibida no tile de nacionalidade.
@@ -167,7 +165,6 @@ export const SCIENTISTS: Scientist[] = [
   { name: "Oscar Sala", field: "Física", birthYear: 1922, nationality: "Itália", gender: "M", award: "Nenhum", alive: false },
   { name: "Mario Schenberg", field: "Física", birthYear: 1914, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
   { name: "José Leite Lopes", field: "Física", birthYear: 1918, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
-  { name: "Paulo Freire", field: "Educação", birthYear: 1921, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
   { name: "Abrahão de Moraes", field: "Astronomia", birthYear: 1917, nationality: "Brasil", gender: "M", award: "Nenhum", alive: false },
   { name: "Elisa Frota Pessoa", field: "Física", birthYear: 1921, nationality: "Brasil", gender: "F", award: "Nenhum", alive: false },
   { name: "Amélia Império Hamburger", field: "Física", birthYear: 1932, nationality: "Brasil", gender: "F", award: "Nenhum", alive: false },

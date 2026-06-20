@@ -450,6 +450,23 @@ body {
   font-weight: 800;
 }
 
+.bio {
+  margin: 14px auto 4px;
+  max-width: 460px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: left;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.bio strong {
+  color: var(--text);
+}
+
 .stats {
   display: flex;
   justify-content: center;

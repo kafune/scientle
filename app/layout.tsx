@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import "./globals.css";
 
-const SITE_URL = "https://spotle.kafune.xyz";
+const SITE_URL = "https://scientle.kafune.xyz";
 const TITLE = "Scientle — adivinhe o cientista do dia";
 const DESCRIPTION =
   "Um jogo diário no estilo Wordle: descubra o cientista misterioso pelas pistas de área, nascimento, país, prêmios e mais. Um novo desafio todo dia às 21h.";

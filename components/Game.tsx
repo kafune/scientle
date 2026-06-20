@@ -10,6 +10,7 @@ import {
   compareGuess,
   findScientist,
   gameDayKey,
+  getBio,
   getDailyScientist,
   getHints,
   getRandomScientist,
@@ -169,7 +170,7 @@ export default function Game() {
     const url =
       typeof window !== "undefined"
         ? window.location.origin
-        : "https://spotle.kafune.xyz";
+        : "https://scientle.kafune.xyz";
     const text = buildShareText({
       guesses,
       won,
@@ -433,6 +434,11 @@ export default function Game() {
                 O cientista era <span className="answer">{target.name}</span>.
               </p>
             </>
+          )}
+          {getBio(target) && (
+            <p className="bio">
+              <strong>{target.name}.</strong> {getBio(target)}
+            </p>
           )}
           {mode === "unlimited" ? (
             <button className="btn" onClick={playAgain}>
