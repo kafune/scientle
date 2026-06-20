@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { saveGameResult } from "@/app/actions/game";
 import { getUserStats } from "@/app/actions/stats";
-import { AWARDS, FIELDS, Scientist } from "@/data/scientists";
+import { Scientist } from "@/data/scientists";
 import {
   buildShareText,
   compareGuess,
@@ -25,7 +25,10 @@ import {
 import { GameStats, recordLocalResult } from "@/lib/stats";
 import AuthButton from "./AuthButton";
 import GuessTable from "./GuessTable";
+import HowToPlay from "./HowToPlay";
 import ScientistImage from "./ScientistImage";
+
+const HOWTO_SEEN_KEY = "scientle:seen-howto";
 
 type Mode = "daily" | "unlimited";
 
@@ -46,7 +49,11 @@ export default function Game() {
   const [hydrated, setHydrated] = useState(false);
   const [stats, setStats] = useState<GameStats | null>(null);
   const [copied, setCopied] = useState(false);
+  const [howToOpen, setHowToOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Confete só na vitória "ao vivo" — não dispara ao restaurar um jogo já ganho.
+  const interactedRef = useRef(false);
+  const confettiFiredRef = useRef(false);
 
   const hintsStorageKey = `spotle-cientifico:daily-hints:${gameDayKey()}`;
 
@@ -55,6 +62,24 @@ export default function Game() {
     setHydrated(true);
     if (!unlimitedTarget) setUnlimitedTarget(getRandomScientist());
   }, [unlimitedTarget]);
+
+  // Abre o "Como jogar" automaticamente na primeira visita.
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(HOWTO_SEEN_KEY)) setHowToOpen(true);
+    } catch {
+      /* storage indisponível: segue sem onboarding */
+    }
+  }, []);
+
+  function closeHowTo() {
+    setHowToOpen(false);
+    try {
+      localStorage.setItem(HOWTO_SEEN_KEY, "1");
+    } catch {
+      /* ignora indisponibilidade de storage */
+    }
+  }
 
   // Resolve o cientista do dia: aplica o override secreto do servidor se houver;
   // em qualquer falha, cai no sorteio determinístico padrão (jogo nunca quebra).
@@ -166,6 +191,41 @@ export default function Game() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [over, mode, hydrated, session]);
 
+  // Celebração na vitória (uma vez por jogo, só quando jogado na sessão atual).
+  useEffect(() => {
+    if (!won || !interactedRef.current || confettiFiredRef.current) return;
+    confettiFiredRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const confetti = (await import("canvas-confetti")).default;
+        if (cancelled) return;
+        const colors = ["#34c77b", "#38c47b", "#d9b933", "#ffffff"];
+        confetti({
+          particleCount: 100,
+          spread: 75,
+          origin: { y: 0.6 },
+          colors,
+        });
+        setTimeout(() => {
+          if (!cancelled)
+            confetti({
+              particleCount: 60,
+              spread: 110,
+              startVelocity: 38,
+              origin: { y: 0.5 },
+              colors,
+            });
+        }, 260);
+      } catch {
+        /* sem confete não quebra o jogo */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [won]);
+
   async function handleShare() {
     const url =
       typeof window !== "undefined"
@@ -204,6 +264,7 @@ export default function Game() {
     if (over || !target) return;
     if (tried.has(scientist.name)) return;
 
+    interactedRef.current = true;
     const result = compareGuess(scientist, target);
     const next = [...guesses, result];
     setGuesses(next);
@@ -251,6 +312,8 @@ export default function Game() {
     if (m === "unlimited") {
       setGuesses([]);
       setHintsUsed(0);
+      interactedRef.current = false;
+      confettiFiredRef.current = false;
     }
   }
 
@@ -260,6 +323,8 @@ export default function Game() {
     setHintsUsed(0);
     setQuery("");
     setActiveSuggestion(0);
+    interactedRef.current = false;
+    confettiFiredRef.current = false;
     inputRef.current?.focus();
   }
 
@@ -267,6 +332,27 @@ export default function Game() {
     <main className="app">
       <header className="header">
         <div className="topbar">
+          <button
+            className="icon-btn"
+            onClick={() => setHowToOpen(true)}
+            aria-label="Como jogar"
+            title="Como jogar"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </button>
           <AuthButton />
         </div>
         <h1 className="title">
@@ -299,26 +385,7 @@ export default function Game() {
         </p>
       </header>
 
-      <details className="instructions">
-        <summary>Como jogar</summary>
-        <div className="instructions-body">
-          <p>
-            A cada palpite, seis atributos são comparados com os do cientista do
-            dia: <strong>área</strong>, <strong>nascimento</strong>,{" "}
-            <strong>país</strong>, <strong>gênero</strong>,{" "}
-            <strong>prêmio</strong> e <strong>status</strong> (vivo ou falecido).
-            Verde indica acerto e amarelo indica que você chegou perto.
-          </p>
-          <p>
-            <strong>Áreas consideradas:</strong> {FIELDS.join(", ")}.
-          </p>
-          <p>
-            <strong>Prêmios considerados:</strong> {AWARDS.join(", ")}. Cientistas
-            sem nenhum desses prêmios aparecem como <em>Nenhum</em> — outras
-            honrarias não entram nesse atributo.
-          </p>
-        </div>
-      </details>
+      <HowToPlay open={howToOpen} onClose={closeHowTo} />
 
       <div className="modes">
         <button
@@ -345,6 +412,21 @@ export default function Game() {
           Tentativa {Math.min(usedCount + (over ? 0 : 1), MAX_GUESSES)} de{" "}
           {MAX_GUESSES}
         </span>
+      </div>
+
+      <div
+        className="progress"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={MAX_GUESSES}
+        aria-valuenow={Math.min(usedCount, MAX_GUESSES)}
+      >
+        <div
+          className="progress-fill"
+          style={{
+            width: `${Math.min((usedCount / MAX_GUESSES) * 100, 100)}%`,
+          }}
+        />
       </div>
 
       <div className="search">
@@ -435,7 +517,7 @@ export default function Game() {
       {guesses.length > 0 && <GuessTable guesses={guesses} />}
 
       {over && target && (
-        <div className="result">
+        <div className={`result ${won ? "win" : ""}`}>
           <div className="reveal">
             <ScientistImage name={target.name} size={128} />
           </div>
