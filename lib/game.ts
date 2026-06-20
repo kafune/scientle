@@ -164,10 +164,53 @@ export function puzzleNumber(date = new Date()): number {
   return Math.floor((ms - PUZZLE_EPOCH) / DAY_MS) + 1;
 }
 
-// Cientista do dia: determinístico a partir do dia de jogo (igual para todos).
+// PRNG determinístico (mulberry32): mesma seed -> mesma sequência.
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Permutação (Fisher-Yates) dos índices [0..n) para um "ciclo" do calendário,
+// embaralhada de forma determinística pela seed do ciclo.
+function rawCycleOrder(cycle: number, n: number): number[] {
+  const rand = mulberry32(hashString(`scientle-cycle:${cycle}`));
+  const order = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
+// Ordem do ciclo evitando repetir, no 1º dia, o mesmo cientista do último dia
+// do ciclo anterior (o swap em índices 0/1 não altera a última posição, então
+// comparar com a ordem "crua" do ciclo anterior é suficiente).
+function cycleOrder(cycle: number, n: number): number[] {
+  const order = rawCycleOrder(cycle, n);
+  if (cycle > 0 && n > 1) {
+    const prevLast = rawCycleOrder(cycle - 1, n)[n - 1];
+    if (order[0] === prevLast) {
+      [order[0], order[1]] = [order[1], order[0]];
+    }
+  }
+  return order;
+}
+
+// Cientista do dia: determinístico e igual para todos. Em vez de um hash módulo
+// (que pode repetir e não cobre todos), percorre uma permutação por ciclo, de
+// modo que os N cientistas apareçam uma vez antes de qualquer repetição.
 export function getDailyScientist(date = new Date()): Scientist {
-  const index = hashString(gameDayKey(date)) % SCIENTISTS.length;
-  return SCIENTISTS[index];
+  const n = SCIENTISTS.length;
+  const seq = puzzleNumber(date) - 1; // índice 0-based do dia de jogo
+  const cycle = Math.floor(seq / n);
+  const within = ((seq % n) + n) % n;
+  const order = cycleOrder(cycle, n);
+  return SCIENTISTS[order[within]];
 }
 
 // Cientista aleatório para o modo prática ilimitado.

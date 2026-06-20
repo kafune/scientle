@@ -24,6 +24,7 @@ import {
 } from "@/lib/game";
 import { GameStats, recordLocalResult } from "@/lib/stats";
 import AuthButton from "./AuthButton";
+import GuessDistribution from "./GuessDistribution";
 import GuessTable from "./GuessTable";
 import HowToPlay from "./HowToPlay";
 import ScientistImage from "./ScientistImage";
@@ -178,7 +179,6 @@ export default function Game() {
       (async () => {
         try {
           await saveGameResult({
-            won,
             guessNames: guesses.map((g) => g.scientist.name),
           });
           const dbStats = await getUserStats();
@@ -443,6 +443,16 @@ export default function Game() {
           }}
           onKeyDown={onKeyDown}
           autoComplete="off"
+          role="combobox"
+          aria-label="Buscar cientista para palpitar"
+          aria-expanded={suggestions.length > 0}
+          aria-controls="suggestion-list"
+          aria-autocomplete="list"
+          aria-activedescendant={
+            suggestions.length > 0
+              ? `suggestion-${activeSuggestion}`
+              : undefined
+          }
         />
         <span className="search-icon" aria-hidden="true">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -451,10 +461,13 @@ export default function Game() {
           </svg>
         </span>
         {suggestions.length > 0 && (
-          <div className="suggestions">
+          <div className="suggestions" id="suggestion-list" role="listbox">
             {suggestions.map((s, i) => (
               <div
                 key={s.name}
+                id={`suggestion-${i}`}
+                role="option"
+                aria-selected={i === activeSuggestion}
                 className={`suggestion ${i === activeSuggestion ? "active" : ""}`}
                 onMouseEnter={() => setActiveSuggestion(i)}
                 onMouseDown={(e) => {
@@ -572,6 +585,12 @@ export default function Game() {
                     <span className="stat-label">Vitórias</span>
                   </div>
                 </div>
+              )}
+              {stats && (
+                <GuessDistribution
+                  distribution={stats.distribution}
+                  highlight={won ? guesses.length : null}
+                />
               )}
               <button className="btn" onClick={handleShare}>
                 {copied ? "Copiado! ✅" : "Compartilhar resultado"}

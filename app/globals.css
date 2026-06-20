@@ -533,11 +533,44 @@ body {
 }
 
 .tile-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+/* Ícone de estado (✓ / ≈ / ✕) — pista redundante à cor, para daltônicos. */
+.tile-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.tile.close .tile-status {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* Conteúdo só para leitores de tela. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .tile-value {
@@ -680,6 +713,80 @@ body {
   letter-spacing: 0.05em;
   color: var(--text-dim);
   text-align: center;
+}
+
+/* Histograma de tentativas */
+.dist {
+  margin: 18px 0 4px;
+  text-align: left;
+}
+
+.dist-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.dist-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dist-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dist-num {
+  flex: 0 0 18px;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.dist-track {
+  flex: 1;
+  min-width: 0;
+}
+
+.dist-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--wrong-2);
+  transition: width 0.5s var(--ease);
+}
+
+.dist-bar.empty {
+  min-width: 0;
+  padding: 0;
+}
+
+.dist-bar.hi {
+  background: linear-gradient(90deg, var(--accent), var(--correct-2));
+}
+
+.dist-count {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.dist-bar.hi .dist-count {
+  color: var(--accent-ink);
 }
 
 .btn {
