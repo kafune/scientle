@@ -16,7 +16,7 @@ export async function saveGameResult(input: {
 
   const userId = session.user.id;
   const dayKey = gameDayKey();
-  const target = resolveDailyTarget();
+  const target = await resolveDailyTarget();
 
   // Mantém só palpites que correspondem a cientistas reais, na ordem enviada,
   // sem duplicatas, limitado ao máximo de tentativas.

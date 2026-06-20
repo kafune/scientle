@@ -55,6 +55,18 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// ---- Cientista do dia, congelado ----
+// Na 1ª vez que um dia de jogo é resolvido, a escolha é gravada aqui e passa a
+// ser a fonte de verdade. Assim o diário fica imune a rebuilds, edições na
+// lista de cientistas e mudanças no algoritmo de sorteio. O override secreto
+// (DAILY_OVERRIDES) continua tendo prioridade sobre este registro.
+model DailyPuzzle {
+  dayKey        String   @id
+  puzzleNumber  Int
+  scientistName String
+  createdAt     DateTime @default(now())
+}
+
 // ---- Resultado diário do jogo ----
 model GameResult {
   id           String   @id @default(cuid())

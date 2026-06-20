@@ -82,8 +82,9 @@ export default function Game() {
     }
   }
 
-  // Resolve o cientista do dia: aplica o override secreto do servidor se houver;
-  // em qualquer falha, cai no sorteio determinístico padrão (jogo nunca quebra).
+  // Resolve o cientista do dia. O servidor é a fonte de verdade (escolha
+  // congelada no banco + override secreto); o cálculo local só é usado como
+  // fallback offline, garantindo que o jogo nunca quebre.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -92,11 +93,11 @@ export default function Game() {
         const res = await fetch("/api/daily", { cache: "no-store" });
         if (res.ok) {
           const data: { name: string | null } = await res.json();
-          const override = data.name ? findScientist(data.name) : undefined;
-          if (override) resolved = override;
+          const fromServer = data.name ? findScientist(data.name) : undefined;
+          if (fromServer) resolved = fromServer;
         }
       } catch {
-        /* offline/erro: usa o sorteio padrão */
+        /* offline/erro: usa o sorteio determinístico local */
       }
       if (!cancelled) setDailyTarget(resolved);
     })();
