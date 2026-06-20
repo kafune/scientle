@@ -79,6 +79,28 @@ export const NOBEL_AWARDS: Award[] = [
   "Nobel de Medicina",
 ];
 
+// Áreas e prêmios considerados no jogo (lista canônica, exibida nas instruções).
+export const FIELDS: Field[] = [
+  "Física",
+  "Química",
+  "Biologia",
+  "Matemática",
+  "Medicina",
+  "Astronomia",
+  "Computação",
+  "Engenharia",
+];
+
+// Prêmios reconhecidos no atributo "Prêmio". Quem não tem nenhum deles aparece
+// como "Nenhum" (que não consta aqui por ser a ausência de prêmio).
+export const AWARDS: Award[] = [
+  "Nobel de Física",
+  "Nobel de Química",
+  "Nobel de Medicina",
+  "Medalha Fields",
+  "Prêmio Turing",
+];
+
 export const SCIENTISTS: Scientist[] = [
   { name: "Albert Einstein", field: "Física", birthYear: 1879, nationality: "Alemanha", gender: "M", award: "Nobel de Física", alive: false },
   { name: "Isaac Newton", field: "Física", birthYear: 1643, nationality: "Reino Unido", gender: "M", award: "Nenhum", alive: false },

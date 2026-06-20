@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { saveGameResult } from "@/app/actions/game";
 import { getUserStats } from "@/app/actions/stats";
-import { Scientist } from "@/data/scientists";
+import { AWARDS, FIELDS, Scientist } from "@/data/scientists";
 import {
   buildShareText,
   compareGuess,
@@ -298,6 +298,27 @@ export default function Game() {
           Adivinhe o cientista do dia em até {MAX_GUESSES} tentativas.
         </p>
       </header>
+
+      <details className="instructions">
+        <summary>Como jogar</summary>
+        <div className="instructions-body">
+          <p>
+            A cada palpite, seis atributos são comparados com os do cientista do
+            dia: <strong>área</strong>, <strong>nascimento</strong>,{" "}
+            <strong>país</strong>, <strong>gênero</strong>,{" "}
+            <strong>prêmio</strong> e <strong>status</strong> (vivo ou falecido).
+            Verde indica acerto e amarelo indica que você chegou perto.
+          </p>
+          <p>
+            <strong>Áreas consideradas:</strong> {FIELDS.join(", ")}.
+          </p>
+          <p>
+            <strong>Prêmios considerados:</strong> {AWARDS.join(", ")}. Cientistas
+            sem nenhum desses prêmios aparecem como <em>Nenhum</em> — outras
+            honrarias não entram nesse atributo.
+          </p>
+        </div>
+      </details>
 
       <div className="modes">
         <button

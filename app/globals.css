@@ -115,6 +115,58 @@ body {
   margin: 4px 0 0;
 }
 
+.instructions {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 16px 0 0;
+  padding: 0 16px;
+}
+
+.instructions > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.instructions > summary::-webkit-details-marker {
+  display: none;
+}
+
+.instructions > summary::before {
+  content: "ℹ️ ";
+}
+
+.instructions > summary::after {
+  content: "▾";
+  float: right;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+
+.instructions[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.instructions-body {
+  padding: 0 0 14px;
+  border-top: 1px solid var(--border);
+}
+
+.instructions-body p {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+.instructions-body strong {
+  color: var(--text);
+}
+
 .modes {
   display: flex;
   justify-content: center;
