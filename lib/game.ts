@@ -233,16 +233,83 @@ export function normalize(str: string): string {
 }
 
 // Sugestões de autocomplete que ainda não foram tentadas.
+// Busca tolerante a acentos com ranqueamento: prefixo do nome completo →
+// prefixo de alguma palavra → todas as palavras buscadas batem início de
+// alguma palavra → substring solta. Aceita múltiplos termos (ex.: "marie c"),
+// exigindo que todos apareçam. O limite alto deixa a lista rolável.
 export function searchScientists(
   query: string,
   exclude: Set<string>,
-  limit = 6,
+  limit = 40,
 ): Scientist[] {
   const q = normalize(query);
   if (!q) return [];
-  return SCIENTISTS.filter(
-    (s) => !exclude.has(s.name) && normalize(s.name).includes(q),
-  ).slice(0, limit);
+  const tokens = q.split(/\s+/).filter(Boolean);
+
+  const scored: { s: Scientist; score: number }[] = [];
+  for (const s of SCIENTISTS) {
+    if (exclude.has(s.name)) continue;
+    const norm = normalize(s.name);
+    // Todos os termos digitados precisam aparecer em algum ponto do nome.
+    if (!tokens.every((t) => norm.includes(t))) continue;
+    const words = norm.split(/\s+/);
+
+    let score: number;
+    if (norm.startsWith(q)) score = 0;
+    else if (words.some((w) => w.startsWith(q))) score = 1;
+    else if (tokens.every((t) => words.some((w) => w.startsWith(t)))) score = 2;
+    else score = 3;
+    scored.push({ s, score });
+  }
+
+  scored.sort(
+    (a, b) => a.score - b.score || a.s.name.localeCompare(b.s.name, "pt"),
+  );
+  return scored.slice(0, limit).map((x) => x.s);
+}
+
+// --- Link/QR de desafio: prática com um alvo definido por quem compartilha ---
+
+// Codifica/decodifica o nome do alvo num token opaco para a URL de desafio.
+// Não é segurança real (roda no cliente), só evita revelar o nome de cara na
+// própria URL. XOR leve + Base64 "URL-safe".
+const CHALLENGE_KEY = 0x5c;
+
+function xorString(input: string): string {
+  let out = "";
+  for (let i = 0; i < input.length; i++) {
+    out += String.fromCharCode(input.charCodeAt(i) ^ CHALLENGE_KEY);
+  }
+  return out;
+}
+
+export function encodeChallenge(name: string): string {
+  const masked = xorString(encodeURIComponent(name));
+  const b64 =
+    typeof btoa !== "undefined"
+      ? btoa(masked)
+      : Buffer.from(masked, "binary").toString("base64");
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export function decodeChallenge(token: string): Scientist | undefined {
+  try {
+    const b64 = token.replace(/-/g, "+").replace(/_/g, "/");
+    const masked =
+      typeof atob !== "undefined"
+        ? atob(b64)
+        : Buffer.from(b64, "base64").toString("binary");
+    const name = decodeURIComponent(xorString(masked));
+    return findScientist(name);
+  } catch {
+    return undefined;
+  }
+}
+
+// Monta a URL completa de desafio a partir da origem do site.
+export function buildChallengeUrl(origin: string, name: string): string {
+  const base = origin.replace(/\/$/, "");
+  return `${base}/?desafio=${encodeChallenge(name)}`;
 }
 
 // --- Sistema de dicas: 3 dicas biográficas próprias (fraca -> média -> forte) ---
@@ -268,17 +335,31 @@ export function getBio(target: Scientist): string {
 
 // --- Compartilhamento estilo Metazooa: um quadrado por palpite ---
 
-// Quadrado colorido pela proximidade do palpite (6 atributos comparados).
-export function proximityEmoji(g: GuessResult): string {
-  if (g.isWin) return "🟩";
+export type Proximity = "win" | "hot" | "warm" | "cold";
+
+// Nível de proximidade do palpite (6 atributos comparados), reaproveitado pelo
+// emoji de compartilhamento e pelos pontos da linha do tempo.
+export function guessProximity(g: GuessResult): Proximity {
+  if (g.isWin) return "win";
   const cells = [g.field, g.birthYear, g.nationality, g.gender, g.award, g.alive];
   const score = cells.reduce(
     (s, c) => s + (c.match === "correct" ? 1 : c.match === "close" ? 0.5 : 0),
     0,
   );
-  if (score >= 3.5) return "🟨"; // quente
-  if (score >= 2) return "🟧"; // morno
-  return "🟥"; // frio
+  if (score >= 3.5) return "hot";
+  if (score >= 2) return "warm";
+  return "cold";
+}
+
+// Quadrado colorido pela proximidade do palpite (6 atributos comparados).
+export function proximityEmoji(g: GuessResult): string {
+  const map: Record<Proximity, string> = {
+    win: "🟩",
+    hot: "🟨",
+    warm: "🟧",
+    cold: "🟥",
+  };
+  return map[guessProximity(g)];
 }
 
 export interface ShareOptions {

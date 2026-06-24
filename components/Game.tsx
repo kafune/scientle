@@ -8,6 +8,7 @@ import { Scientist } from "@/data/scientists";
 import {
   buildShareText,
   compareGuess,
+  decodeChallenge,
   findScientist,
   gameDayKey,
   getBio,
@@ -24,24 +25,41 @@ import {
 } from "@/lib/game";
 import { GameStats, recordLocalResult } from "@/lib/stats";
 import AuthButton from "./AuthButton";
+import BioWidget from "./BioWidget";
+import ChallengeModal from "./ChallengeModal";
 import GuessDistribution from "./GuessDistribution";
 import GuessTable from "./GuessTable";
 import HowToPlay from "./HowToPlay";
 import ScientistImage from "./ScientistImage";
+import Timeline from "./Timeline";
 
 const HOWTO_SEEN_KEY = "scientle:seen-howto";
 
-type Mode = "daily" | "unlimited";
+type Mode = "daily" | "unlimited" | "challenge";
 
 export default function Game() {
   const { data: session } = useSession();
   const [mode, setMode] = useState<Mode>("daily");
 
-  // Alvo: derivado da data no modo diário; sorteado no modo prática.
-  // O diário é resolvido por fetch para permitir o override secreto do servidor.
+  // Alvo: derivado da data no modo diário; sorteado no modo prática; definido
+  // pelo link no modo desafio. O diário é resolvido por fetch para permitir o
+  // override secreto do servidor.
   const [dailyTarget, setDailyTarget] = useState<Scientist | null>(null);
   const [unlimitedTarget, setUnlimitedTarget] = useState<Scientist | null>(null);
-  const target = mode === "daily" ? dailyTarget : unlimitedTarget;
+  const [challengeTarget, setChallengeTarget] = useState<Scientist | null>(null);
+  const target =
+    mode === "daily"
+      ? dailyTarget
+      : mode === "challenge"
+        ? challengeTarget
+        : unlimitedTarget;
+
+  // Cientista cuja bio está aberta no widget da linha do tempo.
+  const [bioScientist, setBioScientist] = useState<Scientist | null>(null);
+  // Modal de "Desafiar um amigo".
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  // Origem do site para montar links de desafio (resolvida no cliente).
+  const [origin, setOrigin] = useState("https://scientle.kafune.xyz");
 
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
@@ -63,6 +81,27 @@ export default function Game() {
     setHydrated(true);
     if (!unlimitedTarget) setUnlimitedTarget(getRandomScientist());
   }, [unlimitedTarget]);
+
+  // Resolve a origem real e detecta um link de desafio (?desafio=token). Se
+  // houver, entra no modo desafio com o alvo escolhido por quem compartilhou.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setOrigin(window.location.origin);
+    try {
+      const token = new URLSearchParams(window.location.search).get("desafio");
+      if (token) {
+        const t = decodeChallenge(token);
+        if (t) {
+          setChallengeTarget(t);
+          setMode("challenge");
+          setGuesses([]);
+          setHintsUsed(0);
+        }
+      }
+    } catch {
+      /* URL malformada: ignora e segue no diário */
+    }
+  }, []);
 
   // Abre o "Como jogar" automaticamente na primeira visita.
   useEffect(() => {
@@ -330,7 +369,8 @@ export default function Game() {
   }
 
   return (
-    <main className="app">
+    <div className="layout">
+      <main className="app">
       <header className="header">
         <div className="topbar">
           <button
@@ -354,7 +394,29 @@ export default function Game() {
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </button>
-          <AuthButton />
+          <div className="topbar-right">
+            <button
+              className="icon-btn"
+              onClick={() => setChallengeOpen(true)}
+              aria-label="Desafiar um amigo"
+              title="Desafiar um amigo"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            </button>
+            <AuthButton />
+          </div>
         </div>
         <h1 className="title">
           <span className="logo-mark" aria-hidden="true">
@@ -401,13 +463,27 @@ export default function Game() {
         >
           Prática ilimitada
         </button>
+        {mode === "challenge" && (
+          <button className="mode-btn active" disabled>
+            Desafio 🔗
+          </button>
+        )}
       </div>
+
+      {mode === "challenge" && (
+        <div className="challenge-banner">
+          🔗 <strong>Desafio de um amigo!</strong> Descubra qual cientista foi
+          escolhido para você.
+        </div>
+      )}
 
       <div className="status-bar">
         <span className="when">
           {mode === "daily"
             ? `Cientista #${puzzleNumber()}`
-            : "Cientista aleatório"}
+            : mode === "challenge"
+              ? "Desafio personalizado"
+              : "Cientista aleatório"}
         </span>
         <span className="count">
           Tentativa {Math.min(usedCount + (over ? 0 : 1), MAX_GUESSES)} de{" "}
@@ -528,6 +604,14 @@ export default function Game() {
         </div>
       )}
 
+      {guesses.length > 0 && (
+        <Timeline
+          guesses={guesses}
+          onSelect={setBioScientist}
+          variant="inline"
+        />
+      )}
+
       {guesses.length > 0 && <GuessTable guesses={guesses} />}
 
       {over && target && (
@@ -561,6 +645,18 @@ export default function Game() {
             <button className="btn" onClick={playAgain}>
               Jogar novamente
             </button>
+          ) : mode === "challenge" ? (
+            <div className="challenge-end">
+              <button className="btn" onClick={() => setChallengeOpen(true)}>
+                Criar meu desafio
+              </button>
+              <button
+                className="challenge-copy"
+                onClick={() => switchMode("daily")}
+              >
+                Jogar o desafio diário
+              </button>
+            </div>
           ) : (
             <>
               {stats && (
@@ -619,6 +715,24 @@ export default function Game() {
         </span>
         <span>↑ / ↓ indica se o cientista nasceu depois / antes</span>
       </div>
-    </main>
+      </main>
+
+      <Timeline
+        guesses={guesses}
+        onSelect={setBioScientist}
+        variant="rail"
+      />
+
+      <BioWidget
+        scientist={bioScientist}
+        onClose={() => setBioScientist(null)}
+      />
+
+      <ChallengeModal
+        open={challengeOpen}
+        origin={origin}
+        onClose={() => setChallengeOpen(false)}
+      />
+    </div>
   );
 }

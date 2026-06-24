@@ -110,4 +110,6 @@ export const SCIENTIST_HINTS: Record<string, [string, string, string]> = {
   "Évariste Galois": ["Rejeitado pela École Polytechnique, estudou na École Normale","estudou soluções de equações","lançou as bases da teoria de grupos"],
   "David Hilbert": ["Doutorou-se sob Lindemann; orientou Hermann Weyl em Göttingen","listou grandes problemas em aberto","formulou os 23 problemas"],
   "John McCarthy": ["Doutorou-se em Princeton sob Donald C. Spencer","sonhava com máquinas pensantes","cunhou 'inteligência artificial'"],
+  "Gottfried Wilhelm Leibniz": ["Estudou em Leipzig e Altdorf; disputou a prioridade do cálculo com Newton","desenvolveu o cálculo e o sistema binário","notação dx e ∫ do cálculo"],
+  "Peter Higgs": ["Doutorou-se no King's College de Londres; professor em Edimburgo","mecanismo que dá massa às partículas","bóson que leva seu nome, confirmado no LHC"],
 };
