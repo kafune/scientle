@@ -212,4 +212,8 @@ export const SCIENTISTS: Scientist[] = [
   { name: "Évariste Galois", field: "Matemática", birthYear: 1811, nationality: "França", gender: "M", award: "Nenhum", alive: false },
   { name: "David Hilbert", field: "Matemática", birthYear: 1862, nationality: "Alemanha", gender: "M", award: "Nenhum", alive: false },
   { name: "John McCarthy", field: "Computação", birthYear: 1927, nationality: "EUA", gender: "M", award: "Prêmio Turing", alive: false },
+
+  // Acréscimos recentes.
+  { name: "Gottfried Wilhelm Leibniz", field: "Matemática", birthYear: 1646, nationality: "Alemanha", gender: "M", award: "Nenhum", alive: false },
+  { name: "Peter Higgs", field: "Física", birthYear: 1929, nationality: "Reino Unido", gender: "M", award: "Nobel de Física", alive: false },
 ];
