@@ -40,14 +40,63 @@ const OVERRIDES: Record<string, { pt?: string; en?: string }> = {
   "Margaret Hamilton": { en: "Margaret Hamilton (software engineer)" },
 };
 
-// Tenta pt e en, com retry/backoff para tolerar rate limiting.
+// Override manual de URL direta — última cartada para nomes que insistem em
+// falhar no automático. Use o Special:FilePath do Commons (aceita ?width=).
+// Ex.: "Oscar Sala": "https://commons.wikimedia.org/wiki/Special:FilePath/Arquivo.jpg?width=256",
+const MANUAL_IMAGES: Record<string, string> = {};
+
+// Fallback robusto: muitos verbetes não expõem "pageimage" (lead image), mas o
+// item correspondente no Wikidata traz a propriedade P18 (imagem). Resolve o
+// Q-id pela própria Wikipédia e monta a URL do arquivo no Commons.
+async function wikidataImageOnce(
+  title: string,
+  lang: string,
+): Promise<string | null> {
+  const qUrl =
+    `https://${lang}.wikipedia.org/w/api.php?action=query&format=json` +
+    `&prop=pageprops&ppprop=wikibase_item&redirects=1` +
+    `&titles=${encodeURIComponent(title)}`;
+  const r = await fetch(qUrl, { headers: { "User-Agent": UA } });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const data: any = await r.json();
+  const page: any = Object.values(data?.query?.pages ?? {})[0];
+  const qid: string | undefined = page?.pageprops?.wikibase_item;
+  if (!qid) return null;
+
+  const wdUrl =
+    `https://www.wikidata.org/w/api.php?action=wbgetclaims&format=json` +
+    `&property=P18&entity=${encodeURIComponent(qid)}`;
+  const wr = await fetch(wdUrl, { headers: { "User-Agent": UA } });
+  if (!wr.ok) throw new Error(`HTTP ${wr.status}`);
+  const wd: any = await wr.json();
+  const file: string | undefined =
+    wd?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+  if (!file) return null;
+  return (
+    `https://commons.wikimedia.org/wiki/Special:FilePath/` +
+    `${encodeURIComponent(file)}?width=256`
+  );
+}
+
+// Tenta pt e en (pageimages e, em seguida, Wikidata P18), com retry/backoff.
 async function thumb(name: string): Promise<string | null> {
+  if (MANUAL_IMAGES[name]) return MANUAL_IMAGES[name];
   const ov = OVERRIDES[name] ?? {};
   for (let attempt = 0; attempt < 4; attempt++) {
     for (const lang of ["pt", "en"] as const) {
       const title = ov[lang] ?? name;
       try {
         const src = await thumbOnce(title, lang);
+        if (src) return src;
+      } catch {
+        await sleep(500 * (attempt + 1));
+      }
+    }
+    // Fallback pela imagem do Wikidata quando não há pageimage.
+    for (const lang of ["pt", "en"] as const) {
+      const title = ov[lang] ?? name;
+      try {
+        const src = await wikidataImageOnce(title, lang);
         if (src) return src;
       } catch {
         await sleep(500 * (attempt + 1));
