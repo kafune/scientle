@@ -2,12 +2,30 @@ import { COUNTRY_FLAG, FIELDS_BY_GROUP } from "@/data/scientists";
 import { CellResult, GuessResult } from "@/lib/game";
 import ScientistImage from "./ScientistImage";
 
-// Dica da Área montada a partir dos grupos: lista quais disciplinas compõem
-// cada "grande área", para a pista amarela não ficar vaga.
+// Dica da Área. A versão em texto (AREA_HINT) alimenta o aria-label; a versão
+// estruturada (AREA_HINT_BODY) é o painelzinho visual com cada grande área e
+// suas disciplinas, para a pista amarela não ficar vaga.
 const AREA_HINT =
   "Amarelo: mesma grande área — " +
   FIELDS_BY_GROUP.map((g) => `${g.label}: ${g.fields.join(", ")}`).join("; ") +
   ".";
+
+const AREA_HINT_BODY = (
+  <>
+    <span className="hint-title">
+      <span className="hint-swatch close" aria-hidden="true" />
+      Amarelo: mesma grande área
+    </span>
+    <span className="hint-groups">
+      {FIELDS_BY_GROUP.map((g) => (
+        <span className="hint-group" key={g.group}>
+          <b>{g.label}</b>
+          <span>{g.fields.join(" · ")}</span>
+        </span>
+      ))}
+    </span>
+  </>
+);
 
 function genderLabel(g: "M" | "F") {
   return g === "M" ? "Masculino" : "Feminino";
@@ -29,12 +47,15 @@ function Tile({
   value,
   flag,
   hint,
+  hintBody,
 }: {
   label: string;
   result: CellResult;
   value: React.ReactNode;
   flag?: string;
   hint?: string;
+  // Conteúdo rico do painelzinho; cai no texto `hint` quando ausente.
+  hintBody?: React.ReactNode;
 }) {
   const arrow =
     result.direction === "up" ? "↑" : result.direction === "down" ? "↓" : null;
@@ -63,8 +84,12 @@ function Tile({
         {arrow && <span className="tarrow">{arrow}</span>}
       </div>
       {hint && (
-        <span className="tile-hint" role="note">
-          {hint}
+        <span
+          className={`tile-hint${hintBody ? " rich" : ""}`}
+          role="note"
+          aria-hidden="true"
+        >
+          {hintBody ?? hint}
         </span>
       )}
     </div>
@@ -80,7 +105,13 @@ function Card({ g }: { g: GuessResult }) {
         <span className="guess-name">{s.name}</span>
       </div>
       <div className="tiles">
-        <Tile label="Área" result={g.field} value={s.field} hint={AREA_HINT} />
+        <Tile
+          label="Área"
+          result={g.field}
+          value={s.field}
+          hint={AREA_HINT}
+          hintBody={AREA_HINT_BODY}
+        />
         <Tile
           label="Nascimento"
           result={g.birthYear}
