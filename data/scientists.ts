@@ -44,6 +44,61 @@ export const FIELD_GROUP: Record<Field, string> = {
   Medicina: "vida",
 };
 
+// Nome legível de cada grande área, exibido nas dicas.
+export const FIELD_GROUP_LABEL: Record<string, string> = {
+  exatas: "Exatas",
+  formais: "Formais",
+  vida: "Ciências da vida",
+};
+
+// Disciplinas agrupadas por grande área, na ordem em que aparecem nas dicas.
+// Serve para explicar, de forma concreta, o que cada "grande área" engloba.
+export const FIELDS_BY_GROUP: {
+  group: string;
+  label: string;
+  fields: Field[];
+}[] = (["exatas", "formais", "vida"] as const).map((group) => ({
+  group,
+  label: FIELD_GROUP_LABEL[group],
+  fields: (Object.keys(FIELD_GROUP) as Field[]).filter(
+    (f) => FIELD_GROUP[f] === group,
+  ),
+}));
+
+// Continente de cada país (modelo de 6 continentes usado no Brasil: a América
+// é um continente único). Usado para a pista "amarela" do país: acertar o
+// continente, mas não o país exato.
+export const COUNTRY_CONTINENT: Record<string, string> = {
+  // América
+  EUA: "América",
+  Canadá: "América",
+  Brasil: "América",
+  // Europa
+  Alemanha: "Europa",
+  "Reino Unido": "Europa",
+  França: "Europa",
+  Itália: "Europa",
+  Áustria: "Europa",
+  Dinamarca: "Europa",
+  Polônia: "Europa",
+  Rússia: "Europa",
+  Sérvia: "Europa",
+  Finlândia: "Europa",
+  Suécia: "Europa",
+  Suíça: "Europa",
+  Hungria: "Europa",
+  Irlanda: "Europa",
+  "Países Baixos": "Europa",
+  // Ásia
+  Índia: "Ásia",
+  Japão: "Ásia",
+  China: "Ásia",
+  Irã: "Ásia",
+  // Oceania
+  Austrália: "Oceania",
+  "Nova Zelândia": "Oceania",
+};
+
 // Bandeira (emoji) de cada país, exibida no tile de nacionalidade.
 export const COUNTRY_FLAG: Record<string, string> = {
   Alemanha: "🇩🇪",

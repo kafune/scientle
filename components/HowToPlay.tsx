@@ -84,7 +84,7 @@ export default function HowToPlay({
             <span className="modal-legend-chip close" aria-hidden="true" />
             <span className="modal-legend-text">
               <strong>Amarelo</strong>
-              <span>Você chegou perto (ex.: mesma grande área).</span>
+              <span>Você chegou perto (ex.: mesma grande área ou mesmo continente).</span>
             </span>
           </div>
           <div className="modal-legend-row">

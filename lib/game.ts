@@ -1,4 +1,5 @@
 import {
+  COUNTRY_CONTINENT,
   FIELD_GROUP,
   NOBEL_AWARDS,
   Scientist,
@@ -75,8 +76,15 @@ export function compareGuess(guess: Scientist, target: Scientist): GuessResult {
           : "down",
   };
 
+  const guessContinent = COUNTRY_CONTINENT[guess.nationality];
+  const targetContinent = COUNTRY_CONTINENT[target.nationality];
   const nationality: CellResult = {
-    match: guess.nationality === target.nationality ? "correct" : "wrong",
+    match:
+      guess.nationality === target.nationality
+        ? "correct"
+        : guessContinent && guessContinent === targetContinent
+          ? "close"
+          : "wrong",
   };
 
   const gender: CellResult = {

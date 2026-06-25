@@ -1,6 +1,13 @@
-import { COUNTRY_FLAG } from "@/data/scientists";
+import { COUNTRY_FLAG, FIELDS_BY_GROUP } from "@/data/scientists";
 import { CellResult, GuessResult } from "@/lib/game";
 import ScientistImage from "./ScientistImage";
+
+// Dica da Área montada a partir dos grupos: lista quais disciplinas compõem
+// cada "grande área", para a pista amarela não ficar vaga.
+const AREA_HINT =
+  "Amarelo: mesma grande área — " +
+  FIELDS_BY_GROUP.map((g) => `${g.label}: ${g.fields.join(", ")}`).join("; ") +
+  ".";
 
 function genderLabel(g: "M" | "F") {
   return g === "M" ? "Masculino" : "Feminino";
@@ -73,12 +80,7 @@ function Card({ g }: { g: GuessResult }) {
         <span className="guess-name">{s.name}</span>
       </div>
       <div className="tiles">
-        <Tile
-          label="Área"
-          result={g.field}
-          value={s.field}
-          hint="Amarelo: mesma grande área (exatas, formais ou vida)."
-        />
+        <Tile label="Área" result={g.field} value={s.field} hint={AREA_HINT} />
         <Tile
           label="Nascimento"
           result={g.birthYear}
@@ -90,6 +92,7 @@ function Card({ g }: { g: GuessResult }) {
           result={g.nationality}
           value={s.nationality}
           flag={COUNTRY_FLAG[s.nationality]}
+          hint="Amarelo: mesmo continente, mas país diferente."
         />
         <Tile label="Gênero" result={g.gender} value={genderLabel(s.gender)} />
         <Tile
