@@ -301,4 +301,26 @@ export const SCIENTISTS: Scientist[] = [
   // Acréscimos recentes.
   { name: "Gottfried Wilhelm Leibniz", field: "Matemática", birthYear: 1646, nationality: "Alemanha", gender: "M", award: "Nenhum", alive: false },
   { name: "Peter Higgs", field: "Física", birthYear: 1929, nationality: "Reino Unido", gender: "M", award: "Nobel de Física", alive: false },
+
+  // Lote adicional (dados verificados): mais áreas, países e mulheres.
+  { name: "John Dalton", field: "Química", birthYear: 1766, nationality: "Reino Unido", gender: "M", award: "Nenhum", alive: false },
+  { name: "Alessandro Volta", field: "Física", birthYear: 1745, nationality: "Itália", gender: "M", award: "Nenhum", alive: false },
+  { name: "André-Marie Ampère", field: "Física", birthYear: 1775, nationality: "França", gender: "M", award: "Nenhum", alive: false },
+  { name: "Georg Ohm", field: "Física", birthYear: 1789, nationality: "Alemanha", gender: "M", award: "Nenhum", alive: false },
+  { name: "Ludwig Boltzmann", field: "Física", birthYear: 1844, nationality: "Áustria", gender: "M", award: "Nenhum", alive: false },
+  { name: "Wolfgang Pauli", field: "Física", birthYear: 1900, nationality: "Áustria", gender: "M", award: "Nobel de Física", alive: false },
+  { name: "Christiaan Huygens", field: "Astronomia", birthYear: 1629, nationality: "Países Baixos", gender: "M", award: "Nenhum", alive: false },
+  { name: "Antonie van Leeuwenhoek", field: "Biologia", birthYear: 1632, nationality: "Países Baixos", gender: "M", award: "Nenhum", alive: false },
+  { name: "Claude Shannon", field: "Computação", birthYear: 1916, nationality: "EUA", gender: "M", award: "Nenhum", alive: false },
+  { name: "Sophie Germain", field: "Matemática", birthYear: 1776, nationality: "França", gender: "F", award: "Nenhum", alive: false },
+  { name: "George Boole", field: "Matemática", birthYear: 1815, nationality: "Reino Unido", gender: "M", award: "Nenhum", alive: false },
+  { name: "Henri Poincaré", field: "Matemática", birthYear: 1854, nationality: "França", gender: "M", award: "Nenhum", alive: false },
+  { name: "Bernhard Riemann", field: "Matemática", birthYear: 1826, nationality: "Alemanha", gender: "M", award: "Nenhum", alive: false },
+  { name: "Murray Gell-Mann", field: "Física", birthYear: 1929, nationality: "EUA", gender: "M", award: "Nobel de Física", alive: false },
+  { name: "John Bardeen", field: "Física", birthYear: 1908, nationality: "EUA", gender: "M", award: "Nobel de Física", alive: false },
+  { name: "Frederick Sanger", field: "Química", birthYear: 1918, nationality: "Reino Unido", gender: "M", award: "Nobel de Química", alive: false },
+  { name: "Jocelyn Bell Burnell", field: "Astronomia", birthYear: 1943, nationality: "Reino Unido", gender: "F", award: "Nenhum", alive: true },
+  { name: "Svante Arrhenius", field: "Química", birthYear: 1859, nationality: "Suécia", gender: "M", award: "Nobel de Química", alive: false },
+  { name: "Karl Landsteiner", field: "Medicina", birthYear: 1868, nationality: "Áustria", gender: "M", award: "Nobel de Medicina", alive: false },
+  { name: "Gertrude Elion", field: "Medicina", birthYear: 1918, nationality: "EUA", gender: "F", award: "Nobel de Medicina", alive: false },
 ];
