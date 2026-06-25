@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { COUNTRY_FLAG, Scientist } from "@/data/scientists";
+import { Scientist } from "@/data/scientists";
 import { getBio } from "@/lib/game";
+import Flag from "./Flag";
 import ScientistImage from "./ScientistImage";
 
 // Widget flutuante com a biografia de um cientista já palpitado. Aberto ao
@@ -26,7 +27,6 @@ export default function BioWidget({
   if (!scientist) return null;
 
   const bio = getBio(scientist);
-  const flag = COUNTRY_FLAG[scientist.nationality] ?? "";
 
   return (
     <div
@@ -57,7 +57,7 @@ export default function BioWidget({
           <div className="bio-widget-id">
             <span className="bio-widget-name">{scientist.name}</span>
             <span className="bio-widget-meta">
-              {flag && <span className="flag">{flag}</span>}
+              <Flag country={scientist.nationality} size={18} />
               {scientist.field} · {scientist.birthYear} ·{" "}
               {scientist.nationality}
             </span>

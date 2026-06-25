@@ -1,5 +1,6 @@
-import { COUNTRY_FLAG, FIELDS_BY_GROUP } from "@/data/scientists";
+import { FIELDS_BY_GROUP } from "@/data/scientists";
 import { CellResult, GuessResult } from "@/lib/game";
+import Flag from "./Flag";
 import ScientistImage from "./ScientistImage";
 
 // Dica da Área. A versão em texto (AREA_HINT) alimenta o aria-label; a versão
@@ -45,14 +46,15 @@ function Tile({
   label,
   result,
   value,
-  flag,
+  country,
   hint,
   hintBody,
 }: {
   label: string;
   result: CellResult;
   value: React.ReactNode;
-  flag?: string;
+  // País a exibir como bandeira (SVG) antes do valor.
+  country?: string;
   hint?: string;
   // Conteúdo rico do painelzinho; cai no texto `hint` quando ausente.
   hintBody?: React.ReactNode;
@@ -79,7 +81,7 @@ function Tile({
         <span className="sr-only"> — {meta.label}</span>
       </div>
       <div className="tile-value">
-        {flag && <span className="flag">{flag}</span>}
+        {country && <Flag country={country} size={20} />}
         <span>{value}</span>
         {arrow && <span className="tarrow">{arrow}</span>}
       </div>
@@ -122,7 +124,7 @@ function Card({ g }: { g: GuessResult }) {
           label="País"
           result={g.nationality}
           value={s.nationality}
-          flag={COUNTRY_FLAG[s.nationality]}
+          country={s.nationality}
           hint="Amarelo: mesmo continente, mas país diferente."
         />
         <Tile label="Gênero" result={g.gender} value={genderLabel(s.gender)} />

@@ -127,6 +127,36 @@ export const COUNTRY_FLAG: Record<string, string> = {
   "Nova Zelândia": "🇳🇿",
 };
 
+// Código ISO 3166-1 alpha-2 de cada país, usado para a bandeira em SVG
+// (public/flags/<código>.svg). Emoji de bandeira não renderiza em muitos
+// dispositivos (Windows não tem os glifos), por isso servimos imagens.
+export const COUNTRY_ISO: Record<string, string> = {
+  Alemanha: "de",
+  "Reino Unido": "gb",
+  França: "fr",
+  Itália: "it",
+  Áustria: "at",
+  Dinamarca: "dk",
+  Polônia: "pl",
+  Rússia: "ru",
+  Sérvia: "rs",
+  Finlândia: "fi",
+  Suécia: "se",
+  Suíça: "ch",
+  Hungria: "hu",
+  Irlanda: "ie",
+  "Países Baixos": "nl",
+  EUA: "us",
+  Canadá: "ca",
+  Brasil: "br",
+  Índia: "in",
+  Japão: "jp",
+  China: "cn",
+  Austrália: "au",
+  Irã: "ir",
+  "Nova Zelândia": "nz",
+};
+
 // Prêmios da família Nobel — usados para a pista "amarela" (mesma família).
 export const NOBEL_AWARDS: Award[] = [
   "Nobel de Física",
