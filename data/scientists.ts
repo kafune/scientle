@@ -180,7 +180,7 @@ export const SCIENTISTS: Scientist[] = [
   // Professores (homenagem) — sem foto, exibidos como avatar de monograma.
   { name: "Leonardo André Testoni", field: "Física", birthYear: 1979, nationality: "Brasil", gender: "M", award: "Nenhum", alive: true },
   { name: "Arthur Biasotto", field: "Física", birthYear: 2000, nationality: "Brasil", gender: "M", award: "Nenhum", alive: true },
-  { name: "Juliana de Lemos", field: "Biologia", birthYear: 2000, nationality: "Brasil", gender: "F", award: "Nenhum", alive: true },
+  { name: "Juliana de Lemos", field: "Biologia", birthYear: 1996, nationality: "Brasil", gender: "F", award: "Nenhum", alive: true },
   { name: "Amanda Lanzotti", field: "Química", birthYear: 1994, nationality: "Brasil", gender: "F", award: "Nenhum", alive: true },
 
   // Cientistas e educadores brasileiros (César Lattes já consta acima).
