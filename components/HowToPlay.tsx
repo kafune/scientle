@@ -96,6 +96,24 @@ export default function HowToPlay({
           </div>
         </div>
 
+        <div className="howto-example">
+          <p className="ex-label">Exemplo — o alvo é química, nascida em 1867</p>
+          <div className="ex-row">
+            <div className="ex-tile correct">
+              <span className="t">✓ Área</span>
+              <span className="v">Química</span>
+            </div>
+            <div className="ex-tile close">
+              <span className="t">≈ Nasc.</span>
+              <span className="v">1889 ↓</span>
+            </div>
+            <div className="ex-tile wrong">
+              <span className="t">✕ País</span>
+              <span className="v">EUA</span>
+            </div>
+          </div>
+        </div>
+
         <p>
           <strong>Áreas consideradas:</strong> {FIELDS.join(", ")}.
         </p>

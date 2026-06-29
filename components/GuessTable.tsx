@@ -100,11 +100,20 @@ function Tile({
 
 function Card({ g }: { g: GuessResult }) {
   const s = g.scientist;
+  const nc = Object.values(g).filter(
+    (v) => typeof v === "object" && v !== null && "match" in v && (v as { match: string }).match === "correct"
+  ).length;
+  const cc = Object.values(g).filter(
+    (v) => typeof v === "object" && v !== null && "match" in v && (v as { match: string }).match === "close"
+  ).length;
   return (
     <div className={`guess-card ${g.isWin ? "win" : ""}`}>
       <div className="guess-head">
         <ScientistImage name={s.name} size={52} />
         <span className="guess-name">{s.name}</span>
+        <span className="guess-summary" title={`${nc} corretos, ${cc} próximos`}>
+          <b>✓ {nc}</b> · <i>≈ {cc}</i>
+        </span>
       </div>
       <div className="tiles">
         <Tile

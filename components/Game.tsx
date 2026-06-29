@@ -16,6 +16,7 @@ import {
   getHints,
   getRandomScientist,
   GuessResult,
+  HINT_COSTS,
   hintPenalty,
   MAX_GUESSES,
   MAX_HINTS,
@@ -30,6 +31,7 @@ import ChallengeModal from "./ChallengeModal";
 import GuessDistribution from "./GuessDistribution";
 import GuessTable from "./GuessTable";
 import HowToPlay from "./HowToPlay";
+import { IslandToast, ToastFeedback } from "./IslandToast";
 import ScientistImage from "./ScientistImage";
 import Timeline from "./Timeline";
 
@@ -69,6 +71,8 @@ export default function Game() {
   const [stats, setStats] = useState<GameStats | null>(null);
   const [copied, setCopied] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
+  const [toast, setToast] = useState<ToastFeedback | null>(null);
+  const toastKey = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   // Confete só na vitória "ao vivo" — não dispara ao restaurar um jogo já ganho.
   const interactedRef = useRef(false);
@@ -311,6 +315,24 @@ export default function Game() {
     setQuery("");
     setActiveSuggestion(0);
 
+    // Calcula feedback para o toast
+    const nc = Object.values(result).filter(
+      (v) => typeof v === "object" && v !== null && "match" in v && (v as { match: string }).match === "correct"
+    ).length;
+    const cc = Object.values(result).filter(
+      (v) => typeof v === "object" && v !== null && "match" in v && (v as { match: string }).match === "close"
+    ).length;
+    const isWin = result.isWin;
+    const score = nc * 2 + cc;
+    toastKey.current += 1;
+    setToast({
+      emoji: isWin ? "🎉" : score >= 8 ? "🔥" : score >= 4 ? "🙂" : "❄️",
+      label: isWin ? "Na mosca!" : score >= 8 ? "Pegando fogo!" : score >= 4 ? "Morno…" : "Frio…",
+      nc,
+      cc,
+      hot: score >= 8 || isWin,
+    });
+
     if (mode === "daily") {
       try {
         localStorage.setItem(
@@ -491,21 +513,26 @@ export default function Game() {
         </span>
       </div>
 
-      <div
-        className="progress"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={MAX_GUESSES}
-        aria-valuenow={Math.min(usedCount, MAX_GUESSES)}
-      >
-        <div
-          className="progress-fill"
-          style={{
-            width: `${Math.min((usedCount / MAX_GUESSES) * 100, 100)}%`,
-          }}
-        />
+      <div className="pips" role="progressbar"
+           aria-valuemin={0} aria-valuemax={MAX_GUESSES} aria-valuenow={usedCount}>
+        {Array.from({ length: MAX_GUESSES }, (_, i) => {
+          let cls = "pip";
+          if (i < guesses.length)                    cls += won ? " win" : " used";
+          else if (i < guesses.length + penalty)     cls += " penalty";
+          return <span key={i} className={cls} />;
+        })}
+      </div>
+      <div className="pip-legend">
+        <span className="key"><span className="dot guess" />Palpites</span>
+        {penalty > 0 && <span className="key"><span className="dot cost" />Custo de dicas</span>}
+        <span className="right">
+          {over
+            ? (won ? "Resolvido!" : "Sem tentativas")
+            : `${remaining} ${remaining === 1 ? "restante" : "restantes"}`}
+        </span>
       </div>
 
+      <div className="search-sticky">
       <div className="search">
         <input
           ref={inputRef}
@@ -564,6 +591,24 @@ export default function Game() {
           </div>
         )}
       </div>
+      </div>
+
+      {guesses.length === 0 && !over && (
+        <div className="empty-state">
+          <p>Cada palpite compara <b>6 atributos</b> com o cientista do dia:</p>
+          <div className="empty-cats">
+            {[
+              ["🔬", "Área"], ["📅", "Nascimento"], ["🌍", "País"],
+              ["⚧",  "Gênero"], ["🏅", "Prêmio"],  ["❤️", "Status"],
+            ].map(([ico, lbl]) => (
+              <div className="empty-cat" key={lbl}>
+                <span aria-hidden="true">{ico}</span>
+                <span>{lbl}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!over && (
         <div className="hints">
@@ -580,16 +625,20 @@ export default function Game() {
             }
           >
             {upcomingCost !== null
-              ? `💡 Dica (−${upcomingCost} tentativas)`
+              ? `💡 Revelar dica (−${upcomingCost})`
               : "💡 Sem mais dicas"}
           </button>
-          {hintsUsed > 0 && (
-            <span className="hint-cost">
-              {hintsUsed}/{MAX_HINTS}{" "}
-              {hintsUsed === 1 ? "dica usada" : "dicas usadas"} · −{penalty}{" "}
-              tentativas
-            </span>
-          )}
+          <div className="hint-ladder" aria-label="Custo crescente das dicas">
+            {HINT_COSTS.map((c, i) => (
+              <span
+                key={i}
+                className={`hint-step ${i < hintsUsed ? "done" : i === hintsUsed ? "next" : ""}`}
+                title={`Dica ${i + 1} custa ${c} tentativa${c > 1 ? "s" : ""}`}
+              >
+                −{c}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -733,6 +782,8 @@ export default function Game() {
         origin={origin}
         onClose={() => setChallengeOpen(false)}
       />
+
+      <IslandToast key={toastKey.current} feedback={toast} />
     </div>
   );
 }
