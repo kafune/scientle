@@ -406,3 +406,23 @@ export function buildShareText(opts: ShareOptions): string {
   const stats = `🔥 ${opts.streak}${avg}`;
   return `${head}\n${line}\n${squares}\n${stats}\n${opts.url}\n#scientle`;
 }
+
+export interface ChallengeShareOptions {
+  guesses: GuessResult[];
+  won: boolean;
+  url: string;
+}
+
+// Texto para quem recebeu um desafio mostrar o próprio desempenho a quem enviou.
+// Foca no resultado (quadradinhos + nº de tentativas); o link aponta para a
+// home, para o amigo jogar ou criar o próprio desafio.
+export function buildChallengeShareText(opts: ChallengeShareOptions): string {
+  const squares = opts.guesses.map(proximityEmoji).join("");
+  const head = `🔬 Desafio Scientle 🔗`;
+  const line = opts.won
+    ? `Resolvi seu desafio em ${opts.guesses.length} ${
+        opts.guesses.length === 1 ? "tentativa" : "tentativas"
+      }! 🎉`
+    : `Não consegui resolver seu desafio dessa vez 😢 (X/${MAX_GUESSES})`;
+  return `${head}\n${line}\n${squares}\n${opts.url}\n#scientle`;
+}

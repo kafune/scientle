@@ -566,6 +566,39 @@ body {
   transform: translateX(-50%) translateY(0);
 }
 
+/* Tiles ficam numa grade de 3 colunas. O balão centralizado (translateX(-50%))
+   sangra para fora da tela nos tiles das pontas — então ancoramos à esquerda na
+   1ª coluna e à direita na 3ª, mantendo só o translateY da animação. */
+.tiles .tile:nth-child(3n + 1) .tile-hint {
+  left: 0;
+  right: auto;
+  transform: translateX(0) translateY(4px);
+}
+.tiles .tile:nth-child(3n + 1).has-hint:hover .tile-hint,
+.tiles .tile:nth-child(3n + 1).has-hint:focus .tile-hint {
+  transform: translateX(0) translateY(0);
+}
+.tiles .tile:nth-child(3n + 1) .tile-hint::after {
+  left: 28px;
+  right: auto;
+  transform: translateX(0);
+}
+
+.tiles .tile:nth-child(3n) .tile-hint {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(4px);
+}
+.tiles .tile:nth-child(3n).has-hint:hover .tile-hint,
+.tiles .tile:nth-child(3n).has-hint:focus .tile-hint {
+  transform: translateX(0) translateY(0);
+}
+.tiles .tile:nth-child(3n) .tile-hint::after {
+  left: auto;
+  right: 28px;
+  transform: translateX(0);
+}
+
 /* Painel "rico": dica com título + grupos (usado na Área). */
 .tile-hint.rich {
   max-width: 250px;
