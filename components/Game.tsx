@@ -6,6 +6,7 @@ import { saveGameResult } from "@/app/actions/game";
 import { getUserStats } from "@/app/actions/stats";
 import { Scientist } from "@/data/scientists";
 import {
+  buildChallengeShareText,
   buildShareText,
   compareGuess,
   decodeChallenge,
@@ -278,6 +279,26 @@ export default function Game() {
       avg: stats?.avgGuesses ?? null,
       url,
     });
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      /* usuário cancelou ou compartilhamento indisponível */
+    }
+  }
+
+  // Compartilha o desempenho num desafio recebido (resultado + link da home).
+  async function handleShareChallenge() {
+    const url =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://scientle.kafune.xyz";
+    const text = buildChallengeShareText({ guesses, won, url });
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({ text });
@@ -647,7 +668,13 @@ export default function Game() {
             </button>
           ) : mode === "challenge" ? (
             <div className="challenge-end">
-              <button className="btn" onClick={() => setChallengeOpen(true)}>
+              <button className="btn" onClick={handleShareChallenge}>
+                {copied ? "Copiado! ✅" : "Compartilhar resultado"}
+              </button>
+              <button
+                className="challenge-copy"
+                onClick={() => setChallengeOpen(true)}
+              >
                 Criar meu desafio
               </button>
               <button
