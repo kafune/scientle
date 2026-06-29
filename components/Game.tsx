@@ -39,6 +39,25 @@ const HOWTO_SEEN_KEY = "scientle:seen-howto";
 
 type Mode = "daily" | "unlimited" | "challenge";
 
+// Lê as "marcas" de dica salvas (quantos palpites existiam quando cada dica foi
+// pedida). Aceita o formato novo (array JSON) e o antigo (um número = total de
+// dicas); no formato antigo, posiciona as dicas após os palpites já dados,
+// reproduzindo o comportamento legado para jogos diários em andamento.
+function parseHintMarks(raw: string | null, guessCount: number): number[] {
+  if (!raw) return [];
+  const legacy = (count: number) =>
+    Array.from({ length: Math.max(0, count) }, () => guessCount);
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((n) => typeof n === "number" && n >= 0);
+    }
+    return legacy(Number(parsed) || 0);
+  } catch {
+    return legacy(Number(raw) || 0);
+  }
+}
+
 export default function Game() {
   const { data: session } = useSession();
   const [mode, setMode] = useState<Mode>("daily");
@@ -64,7 +83,10 @@ export default function Game() {
   const [origin, setOrigin] = useState("https://scientle.kafune.xyz");
 
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
-  const [hintsUsed, setHintsUsed] = useState(0);
+  // Marcas de dica: para cada dica revelada, quantos palpites já existiam no
+  // momento. Permite desenhar os pips na ordem real das ações (palpite → dica
+  // → palpite) em vez de agrupar todas as dicas no fim. hintsUsed é derivado.
+  const [hintMarks, setHintMarks] = useState<number[]>([]);
   const [query, setQuery] = useState("");
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [hydrated, setHydrated] = useState(false);
@@ -99,7 +121,7 @@ export default function Game() {
           setChallengeTarget(t);
           setMode("challenge");
           setGuesses([]);
-          setHintsUsed(0);
+          setHintMarks([]);
         }
       }
     } catch {
@@ -156,6 +178,7 @@ export default function Game() {
     if (mode !== "daily" || !hydrated || !dailyTarget) return;
     try {
       const saved = localStorage.getItem(dailyStorageKey);
+      let restoredCount = 0;
       if (saved) {
         const names: string[] = JSON.parse(saved);
         const restored = names
@@ -163,19 +186,22 @@ export default function Game() {
           .filter((s): s is Scientist => !!s)
           .map((s) => compareGuess(s, dailyTarget));
         setGuesses(restored);
+        restoredCount = restored.length;
       } else {
         setGuesses([]);
       }
-      const savedHints = localStorage.getItem(hintsStorageKey);
-      setHintsUsed(savedHints ? Number(savedHints) || 0 : 0);
+      setHintMarks(
+        parseHintMarks(localStorage.getItem(hintsStorageKey), restoredCount),
+      );
     } catch {
       setGuesses([]);
-      setHintsUsed(0);
+      setHintMarks([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated, dailyTarget]);
 
   // Dicas custam de forma crescente (3 → 5 → 7), somadas como penalidade.
+  const hintsUsed = hintMarks.length;
   const hints = useMemo(() => (target ? getHints(target) : []), [target]);
   const revealedHints = hints.slice(0, hintsUsed);
   const penalty = hintPenalty(hintsUsed);
@@ -187,6 +213,33 @@ export default function Game() {
   const lost = !won && usedCount >= MAX_GUESSES;
   const over = won || lost;
 
+  // Pips em ordem cronológica: cada palpite e, logo depois, as dicas pedidas
+  // naquele momento (cada dica custa HINT_COSTS[i] tentativas). Assim a barra
+  // reflete a ordem real das ações — ex.: palpite → dicas → palpite.
+  const pipFill = useMemo(() => {
+    const fill: ("used" | "win" | "penalty")[] = [];
+    let hi = 0;
+    const pushHintsAt = (count: number) => {
+      while (hi < hintMarks.length && hintMarks[hi] === count) {
+        const cost = HINT_COSTS[hi] ?? 0;
+        for (let k = 0; k < cost; k++) fill.push("penalty");
+        hi++;
+      }
+    };
+    pushHintsAt(0);
+    for (let g = 0; g < guesses.length; g++) {
+      fill.push(won ? "win" : "used");
+      pushHintsAt(g + 1);
+    }
+    // Segurança: qualquer dica com posição além do último palpite entra ao fim.
+    while (hi < hintMarks.length) {
+      const cost = HINT_COSTS[hi] ?? 0;
+      for (let k = 0; k < cost; k++) fill.push("penalty");
+      hi++;
+    }
+    return fill;
+  }, [guesses.length, hintMarks, won]);
+
   const canHint =
     !over &&
     !!target &&
@@ -196,11 +249,13 @@ export default function Game() {
 
   function useHint() {
     if (!canHint) return;
-    const next = hintsUsed + 1;
-    setHintsUsed(next);
+    // Registra o momento da dica (nº de palpites já dados) para preservar a
+    // ordem cronológica dos pips.
+    const marks = [...hintMarks, guesses.length];
+    setHintMarks(marks);
     if (mode === "daily") {
       try {
-        localStorage.setItem(hintsStorageKey, String(next));
+        localStorage.setItem(hintsStorageKey, JSON.stringify(marks));
       } catch {
         /* ignora indisponibilidade de storage */
       }
@@ -380,7 +435,7 @@ export default function Game() {
     setActiveSuggestion(0);
     if (m === "unlimited") {
       setGuesses([]);
-      setHintsUsed(0);
+      setHintMarks([]);
       interactedRef.current = false;
       confettiFiredRef.current = false;
     }
@@ -389,7 +444,7 @@ export default function Game() {
   function playAgain() {
     setUnlimitedTarget(getRandomScientist());
     setGuesses([]);
-    setHintsUsed(0);
+    setHintMarks([]);
     setQuery("");
     setActiveSuggestion(0);
     interactedRef.current = false;
@@ -523,9 +578,8 @@ export default function Game() {
       <div className="pips" role="progressbar"
            aria-valuemin={0} aria-valuemax={MAX_GUESSES} aria-valuenow={usedCount}>
         {Array.from({ length: MAX_GUESSES }, (_, i) => {
-          let cls = "pip";
-          if (i < guesses.length)                    cls += won ? " win" : " used";
-          else if (i < guesses.length + penalty)     cls += " penalty";
+          const kind = pipFill[i];
+          const cls = kind ? `pip ${kind}` : "pip";
           return <span key={i} className={cls} />;
         })}
       </div>
