@@ -364,6 +364,13 @@ export default function Game() {
     } else if (e.key === "Enter") {
       e.preventDefault();
       handleSubmitText();
+    } else if (e.key === "Escape") {
+      // Limpa a busca / fecha as sugestões sem sair do campo.
+      if (query) {
+        e.preventDefault();
+        setQuery("");
+        setActiveSuggestion(0);
+      }
     }
   }
 
@@ -588,6 +595,11 @@ export default function Game() {
                 </span>
               </div>
             ))}
+          </div>
+        )}
+        {!over && query.trim() !== "" && suggestions.length === 0 && (
+          <div className="suggestions-empty" role="status">
+            Nenhum cientista encontrado para “{query.trim()}”.
           </div>
         )}
       </div>
