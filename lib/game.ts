@@ -227,17 +227,33 @@ export function getRandomScientist(): Scientist {
   return SCIENTISTS[index];
 }
 
-export function findScientist(name: string): Scientist | undefined {
-  const normalized = normalize(name);
-  return SCIENTISTS.find((s) => normalize(s.name) === normalized);
-}
-
 export function normalize(str: string): string {
   return str
     .trim()
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
+}
+
+// Índice de busca pré-computado: normalizar (NFD + regex) e tokenizar os nomes
+// é caro e antes era refeito para os ~128 cientistas a cada tecla digitada.
+// Calculamos uma única vez no carregamento do módulo e reaproveitamos.
+interface IndexedScientist {
+  s: Scientist;
+  norm: string; // nome completo normalizado
+  words: string[]; // palavras normalizadas do nome
+}
+
+const SEARCH_INDEX: IndexedScientist[] = SCIENTISTS.map((s) => {
+  const norm = normalize(s.name);
+  return { s, norm, words: norm.split(/\s+/) };
+});
+
+// Mapa nome-normalizado -> cientista, para lookup O(1) em findScientist.
+const BY_NORM_NAME = new Map(SEARCH_INDEX.map((e) => [e.norm, e.s]));
+
+export function findScientist(name: string): Scientist | undefined {
+  return BY_NORM_NAME.get(normalize(name));
 }
 
 // Sugestões de autocomplete que ainda não foram tentadas.
@@ -255,12 +271,10 @@ export function searchScientists(
   const tokens = q.split(/\s+/).filter(Boolean);
 
   const scored: { s: Scientist; score: number }[] = [];
-  for (const s of SCIENTISTS) {
+  for (const { s, norm, words } of SEARCH_INDEX) {
     if (exclude.has(s.name)) continue;
-    const norm = normalize(s.name);
     // Todos os termos digitados precisam aparecer em algum ponto do nome.
     if (!tokens.every((t) => norm.includes(t))) continue;
-    const words = norm.split(/\s+/);
 
     let score: number;
     if (norm.startsWith(q)) score = 0;

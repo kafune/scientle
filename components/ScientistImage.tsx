@@ -22,6 +22,7 @@ export default function ScientistImage({
         height={size}
         style={{ width: size, height: size }}
         loading="lazy"
+        decoding="async"
       />
     );
   }

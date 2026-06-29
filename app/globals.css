@@ -402,6 +402,24 @@ body {
   font-weight: 600;
 }
 
+/* Mensagem quando a busca não retorna nenhum cientista. */
+.suggestions-empty {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: fade-slide 0.16s var(--ease);
+}
+
 /* ====================== Cartões de palpite ====================== */
 .guesses {
   display: flex;
@@ -1689,6 +1707,186 @@ body {
     padding: 8px 14px;
     font-size: 0.85rem;
   }
+}
+
+/* ============= Responsividade mobile-first (item 9) ============= */
+
+/* Previne scroll horizontal sem quebrar position: sticky */
+html, body { overflow-x: clip; }
+.app        { overflow-x: clip; }
+
+/* Tiles: não quebram palavra no meio */
+.tile-value { overflow-wrap: break-word; }
+
+/* Alvos de toque mínimos (WCAG) */
+.icon-btn { min-width: 40px; min-height: 40px; }
+
+/* Mobile pequeno (≤ 480px) */
+@media (max-width: 480px) {
+  .tile-value  { font-size: 0.94rem; }
+  .tile-label  { font-size: 0.64rem; }
+  .island      { padding: 8px 14px;  }
+}
+
+/* Tela muito estreita (≤ 360px) */
+@media (max-width: 360px) {
+  .tile        { padding: 8px;       }
+  .tile-value  { font-size: 0.86rem; }
+  .tiles       { gap: 6px;           }
+}
+
+/* Tablet médio (700 – 1000px) — deixa a coluna central respirar */
+@media (min-width: 700px) and (max-width: 1000px) {
+  .layout > .app { max-width: 640px; }
+}
+
+/* ====================== Busca sticky (item 3) ====================== */
+.search-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 0 -16px 24px;
+  padding: 10px 16px;
+  background: rgba(11, 12, 15, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(39, 42, 51, 0.55);
+}
+.search-sticky .search { margin-bottom: 0; }
+
+/* ====================== Pips de tentativa (item 2) ====================== */
+.pips { display: flex; gap: 5px; margin-bottom: 8px; }
+.pip {
+  flex: 1; height: 8px; border-radius: 999px;
+  background: var(--bg-elevated-2);
+  transition: background 0.3s ease;
+}
+.pip.used    { background: linear-gradient(135deg, var(--accent), var(--correct-2)); }
+.pip.win     { background: linear-gradient(135deg, var(--accent), #28b06c); }
+.pip.penalty { background: linear-gradient(135deg, var(--close-2), var(--close)); }
+
+.pip-legend  {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 22px; font-size: 0.74rem; color: var(--text-faint);
+}
+.pip-legend .key { display: inline-flex; align-items: center; gap: 5px; }
+.pip-legend .dot { width: 9px; height: 9px; border-radius: 3px; }
+.pip-legend .dot.guess { background: linear-gradient(135deg, var(--accent), var(--correct-2)); }
+.pip-legend .dot.cost  { background: linear-gradient(135deg, var(--close-2), var(--close)); }
+.pip-legend .right { margin-left: auto; font-weight: 600; color: var(--text-dim); }
+
+/* ====================== Resumo por cartão (item 4) ====================== */
+.guess-summary {
+  margin-left: auto; flex: none;
+  font-size: 0.74rem; font-weight: 800; color: var(--text-dim);
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 999px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.guess-summary b { color: var(--correct-2); font-style: normal; }
+.guess-summary i { color: var(--close-2);   font-style: normal; }
+
+/* ====================== Empty-state (item 5) ====================== */
+.empty-state {
+  padding: 18px 16px; margin: 8px 0 4px;
+  border: 1px dashed var(--border-strong); border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+.empty-state p { margin: 0 0 14px; font-size: 0.85rem; color: var(--text-dim); text-align: center; }
+.empty-state p b { color: var(--text); }
+.empty-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.empty-cat {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 12px 6px; border-radius: var(--radius-sm);
+  background: var(--bg-elevated-2); border: 1px solid var(--border);
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--text-dim);
+}
+.empty-cat span:first-child { font-size: 1.25rem; }
+
+/* ====================== Escada de dicas (item 7) ====================== */
+.hint-ladder { display: flex; align-items: center; gap: 5px; }
+.hint-step {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; height: 24px; padding: 0 7px; border-radius: 8px;
+  font-size: 0.74rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  background: var(--bg-elevated); color: var(--text-faint); border: 1px solid var(--border);
+}
+.hint-step.done { background: linear-gradient(135deg, var(--close-2), var(--close)); color: var(--close-ink); border-color: transparent; }
+.hint-step.next { background: var(--bg-elevated-2); color: var(--close-2); border: 1px solid rgba(198, 167, 40, 0.5); }
+
+/* ====================== Exemplo visual no How-to (item 6) ====================== */
+.howto-example {
+  margin: 18px 0 0; padding: 14px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.howto-example .ex-label {
+  font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-faint); margin: 0 0 10px;
+}
+.howto-example .ex-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.howto-example .ex-tile {
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  padding: 9px 10px; border-radius: 10px; min-height: 58px;
+}
+.howto-example .ex-tile .t { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; opacity: 0.9; }
+.howto-example .ex-tile .v { font-weight: 800; }
+.howto-example .ex-tile.correct { background: linear-gradient(160deg, var(--correct-2), var(--correct)); color: #fff; }
+.howto-example .ex-tile.close   { background: linear-gradient(160deg, var(--close-2),   var(--close));   color: var(--close-ink); }
+.howto-example .ex-tile.wrong   { background: linear-gradient(160deg, var(--wrong-2),   var(--wrong));   color: #ededed; }
+
+/* ====================== Countdown (item 8) ====================== */
+.countdown {
+  margin: 18px auto 0; max-width: 320px; padding: 12px 16px;
+  background: var(--bg-soft); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); text-align: center;
+}
+.cd-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); margin-bottom: 4px; }
+.cd-time  { font-size: 1.7rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; color: var(--accent); }
+
+/* ====================== Toast de feedback (item 1) ====================== */
+.island-toast {
+  position: fixed;
+  top: 14px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 60;
+  pointer-events: none;
+  padding: 0 12px;
+  animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.island-toast .island { pointer-events: auto; }
+
+.island {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 10px 18px;
+  box-shadow: var(--shadow-md);
+}
+.island.hot {
+  background: linear-gradient(135deg, rgba(44, 160, 90, 0.25), var(--bg-elevated));
+  border-color: rgba(52, 199, 123, 0.5);
+}
+.island-expanded {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.island-emoji { font-size: 1.35rem; line-height: 1; }
+.island-verdict { display: flex; flex-direction: column; gap: 2px; }
+.island-verdict .lab { font-size: 0.9rem; font-weight: 800; color: var(--text); }
+.island-verdict .sub { font-size: 0.75rem; color: var(--text-dim); }
+.island-verdict .sub b { color: var(--correct-2); font-style: normal; }
+.island-verdict .sub i { color: var(--close-2); font-style: normal; }
+
+@keyframes toastIn {
+  0%  { transform: translateY(-22px); opacity: 0; }
+  100%{ transform: translateY(0);     opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
