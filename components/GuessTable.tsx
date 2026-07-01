@@ -1,5 +1,5 @@
 import { FIELDS_BY_GROUP } from "@/data/scientists";
-import { CellResult, GuessResult } from "@/lib/game";
+import { CellResult, formatAwards, GuessResult } from "@/lib/game";
 import Flag from "./Flag";
 import ScientistImage from "./ScientistImage";
 
@@ -140,8 +140,8 @@ function Card({ g }: { g: GuessResult }) {
         <Tile
           label="Prêmio"
           result={g.award}
-          value={s.award}
-          hint="Amarelo: ambos têm um prêmio Nobel, mas de categorias diferentes."
+          value={formatAwards(s.awards)}
+          hint="Verde: exatamente os mesmos prêmios. Amarelo: compartilham ao menos um prêmio em comum. Cinza: nenhum prêmio em comum."
         />
         <Tile
           label="Status"

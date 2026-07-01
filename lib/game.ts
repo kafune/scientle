@@ -1,7 +1,7 @@
 import {
+  Award,
   COUNTRY_CONTINENT,
   FIELD_GROUP,
-  NOBEL_AWARDS,
   Scientist,
   SCIENTISTS,
 } from "@/data/scientists";
@@ -50,6 +50,39 @@ export function nextHintCost(used: number): number | null {
 // Tolerância em anos para a pista "amarela" do nascimento.
 const YEAR_CLOSE_RANGE = 25;
 
+// Compara os prêmios como multiconjuntos (um cientista pode ter vários, com
+// repetição — ex.: um duplo-laureado tem dois "Nobel de Química"):
+//   verde  → os conjuntos de prêmios são idênticos (mesmos prêmios e mesma
+//            quantidade); dois "sem prêmio" também dão verde.
+//   amarelo → não são idênticos, mas compartilham ao menos um prêmio em comum.
+//   cinza  → nenhum prêmio em comum.
+// Não há mais o antigo "amarelo" entre dois Nobel de categorias diferentes:
+// sem prêmio idêntico em comum, a caixa fica cinza.
+export function awardMatch(guess: Award[], target: Award[]): Match {
+  if (sameMultiset(guess, target)) return "correct";
+  const targetSet = new Set(target);
+  if (guess.some((a) => targetSet.has(a))) return "close";
+  return "wrong";
+}
+
+function sameMultiset(a: Award[], b: Award[]): boolean {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort();
+  const sb = [...b].sort();
+  return sa.every((x, i) => x === sb[i]);
+}
+
+// Rótulo legível dos prêmios de um cientista. Vazio vira "Nenhum"; repetições
+// viram "Nobel de Física (2×)"; múltiplos prêmios ficam separados por " · ".
+export function formatAwards(awards: Award[]): string {
+  if (awards.length === 0) return "Nenhum";
+  const counts = new Map<Award, number>();
+  for (const a of awards) counts.set(a, (counts.get(a) ?? 0) + 1);
+  return [...counts.entries()]
+    .map(([a, n]) => (n > 1 ? `${a} (${n}×)` : a))
+    .join(" · ");
+}
+
 export function compareGuess(guess: Scientist, target: Scientist): GuessResult {
   const field: CellResult = {
     match:
@@ -92,12 +125,7 @@ export function compareGuess(guess: Scientist, target: Scientist): GuessResult {
   };
 
   const award: CellResult = {
-    match:
-      guess.award === target.award
-        ? "correct"
-        : NOBEL_AWARDS.includes(guess.award) && NOBEL_AWARDS.includes(target.award)
-          ? "close"
-          : "wrong",
+    match: awardMatch(guess.awards, target.awards),
   };
 
   const alive: CellResult = {

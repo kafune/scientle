@@ -132,4 +132,7 @@ export const SCIENTIST_HINTS: Record<string, [string, string, string]> = {
   "Svante Arrhenius": ["Doutorou-se na Universidade de Uppsala","íons em solução e velocidade das reações","teoria da dissociação iônica; estimou o efeito estufa"],
   "Karl Landsteiner": ["Formou-se em Viena; depois, no Instituto Rockefeller, em Nova York","diferenças no sangue humano","os grupos sanguíneos A, B, AB e O"],
   "Gertrude Elion": ["Pesquisou na farmacêutica Burroughs Wellcome, ao lado de George Hitchings","desenho racional de medicamentos","fármacos contra leucemia, malária e infecções virais"],
+  "Barry Sharpless": ["Doutorou-se em Stanford; pesquisa no Scripps Research","reações químicas altamente seletivas","catálise assimétrica e química 'click': dois Nobel de Química"],
+  "Geoffrey Hinton": ["Doutorou-se em Edimburgo; lecionou em Toronto","redes neurais artificiais","aprendizado profundo: Prêmio Turing e Nobel de Física"],
+  "Herbert A. Simon": ["Lecionou na Carnegie Mellon; colaborou com Allen Newell","inteligência artificial e tomada de decisão","racionalidade limitada; Prêmio Turing por trabalhos em IA"],
 };
