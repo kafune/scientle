@@ -120,7 +120,10 @@ export default function HowToPlay({
         <p>
           <strong>Prêmios considerados:</strong> {AWARDS.join(", ")}. Cientistas
           sem nenhum desses prêmios aparecem como <em>Nenhum</em> — outras
-          honrarias não entram nesse atributo.
+          honrarias não entram nesse atributo. Alguns têm mais de um prêmio
+          (duplo-laureados); nesse caso o <strong>verde</strong> exige
+          exatamente os mesmos prêmios, o <strong>amarelo</strong> indica ao
+          menos um prêmio em comum e o <strong>cinza</strong>, nenhum em comum.
         </p>
 
         <button className="modal-cta" onClick={onClose}>

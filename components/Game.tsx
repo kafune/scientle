@@ -40,6 +40,24 @@ const HOWTO_SEEN_KEY = "scientle:seen-howto";
 
 type Mode = "daily" | "unlimited" | "challenge";
 
+// Lê o registro de dicas do localStorage. O formato novo é um array com o nº de
+// palpites feitos no momento de cada dica; o formato antigo era só a contagem
+// de dicas — nesse caso, posiciona todas após os palpites já restaurados (como
+// os pips eram desenhados antes), para não bagunçar um jogo salvo no meio.
+function parseHintTimes(raw: string | null, guessCount: number): number[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    if (Array.isArray(v)) {
+      return v.map(Number).filter((n) => Number.isFinite(n));
+    }
+  } catch {
+    /* não é JSON: cai no tratamento legado abaixo */
+  }
+  const n = Number(raw) || 0;
+  return Array.from({ length: n }, () => guessCount);
+}
+
 export default function Game() {
   const { data: session } = useSession();
   const [mode, setMode] = useState<Mode>("daily");
@@ -65,7 +83,11 @@ export default function Game() {
   const [origin, setOrigin] = useState("https://scientle.kafune.xyz");
 
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
-  const [hintsUsed, setHintsUsed] = useState(0);
+  // Momento de cada dica revelada: hintTimes[i] = quantos palpites já haviam
+  // sido feitos quando a dica i foi pedida. Guardar essa ordem permite pintar
+  // os pips na sequência real dos eventos (palpite → dica → palpite …).
+  const [hintTimes, setHintTimes] = useState<number[]>([]);
+  const hintsUsed = hintTimes.length;
   const [query, setQuery] = useState("");
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [hydrated, setHydrated] = useState(false);
@@ -100,7 +122,7 @@ export default function Game() {
           setChallengeTarget(t);
           setMode("challenge");
           setGuesses([]);
-          setHintsUsed(0);
+          setHintTimes([]);
         }
       }
     } catch {
@@ -157,21 +179,22 @@ export default function Game() {
     if (mode !== "daily" || !hydrated || !dailyTarget) return;
     try {
       const saved = localStorage.getItem(dailyStorageKey);
+      let restoredCount = 0;
       if (saved) {
         const names: string[] = JSON.parse(saved);
         const restored = names
           .map((n) => findScientist(n))
           .filter((s): s is Scientist => !!s)
           .map((s) => compareGuess(s, dailyTarget));
+        restoredCount = restored.length;
         setGuesses(restored);
       } else {
         setGuesses([]);
       }
-      const savedHints = localStorage.getItem(hintsStorageKey);
-      setHintsUsed(savedHints ? Number(savedHints) || 0 : 0);
+      setHintTimes(parseHintTimes(localStorage.getItem(hintsStorageKey), restoredCount));
     } catch {
       setGuesses([]);
-      setHintsUsed(0);
+      setHintTimes([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated, dailyTarget]);
@@ -188,6 +211,30 @@ export default function Game() {
   const lost = !won && usedCount >= MAX_GUESSES;
   const over = won || lost;
 
+  // Classes dos pips na ordem cronológica dos eventos: cada palpite entra como
+  // um pip verde e cada dica, como seus pips de custo (amarelos), logo após o
+  // palpite em que foi pedida. Assim "palpite → dica → palpite" pinta
+  // verde → amarelo → verde, em vez de agrupar todos os verdes no início.
+  const pipClasses = useMemo(() => {
+    const cls: string[] = [];
+    const guessCls = won ? "pip win" : "pip used";
+    let hi = 0;
+    for (let g = 0; g <= guesses.length; g++) {
+      while (hi < hintTimes.length && hintTimes[hi] === g) {
+        for (let c = 0; c < HINT_COSTS[hi]; c++) cls.push("pip penalty");
+        hi++;
+      }
+      if (g < guesses.length) cls.push(guessCls);
+    }
+    // Segurança: dicas cuja marca de tempo excede o nº de palpites (ex.: dados
+    // legados) entram ao final, para nenhum custo se perder.
+    while (hi < hintTimes.length) {
+      for (let c = 0; c < HINT_COSTS[hi]; c++) cls.push("pip penalty");
+      hi++;
+    }
+    return cls;
+  }, [guesses.length, hintTimes, won]);
+
   const canHint =
     !over &&
     !!target &&
@@ -197,11 +244,13 @@ export default function Game() {
 
   function useHint() {
     if (!canHint) return;
-    const next = hintsUsed + 1;
-    setHintsUsed(next);
+    // Registra a dica no ponto atual da linha do tempo (após os palpites já
+    // feitos), preservando a ordem real dos eventos para pintar os pips.
+    const next = [...hintTimes, guesses.length];
+    setHintTimes(next);
     if (mode === "daily") {
       try {
-        localStorage.setItem(hintsStorageKey, String(next));
+        localStorage.setItem(hintsStorageKey, JSON.stringify(next));
       } catch {
         /* ignora indisponibilidade de storage */
       }
@@ -401,7 +450,7 @@ export default function Game() {
     setActiveSuggestion(0);
     if (m === "unlimited") {
       setGuesses([]);
-      setHintsUsed(0);
+      setHintTimes([]);
       interactedRef.current = false;
       confettiFiredRef.current = false;
     }
@@ -410,7 +459,7 @@ export default function Game() {
   function playAgain() {
     setUnlimitedTarget(getRandomScientist());
     setGuesses([]);
-    setHintsUsed(0);
+    setHintTimes([]);
     setQuery("");
     setActiveSuggestion(0);
     interactedRef.current = false;
@@ -543,12 +592,9 @@ export default function Game() {
 
       <div className="pips" role="progressbar"
            aria-valuemin={0} aria-valuemax={MAX_GUESSES} aria-valuenow={usedCount}>
-        {Array.from({ length: MAX_GUESSES }, (_, i) => {
-          let cls = "pip";
-          if (i < guesses.length)                    cls += won ? " win" : " used";
-          else if (i < guesses.length + penalty)     cls += " penalty";
-          return <span key={i} className={cls} />;
-        })}
+        {Array.from({ length: MAX_GUESSES }, (_, i) => (
+          <span key={i} className={i < pipClasses.length ? pipClasses[i] : "pip"} />
+        ))}
       </div>
       <div className="pip-legend">
         <span className="key"><span className="dot guess" />Palpites</span>

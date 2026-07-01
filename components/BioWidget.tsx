@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Scientist } from "@/data/scientists";
-import { getBio } from "@/lib/game";
+import { formatAwards, getBio } from "@/lib/game";
 import Flag from "./Flag";
 import ScientistImage from "./ScientistImage";
 
@@ -61,8 +61,10 @@ export default function BioWidget({
               {scientist.field} · {scientist.birthYear} ·{" "}
               {scientist.nationality}
             </span>
-            {scientist.award !== "Nenhum" && (
-              <span className="bio-widget-award">🏅 {scientist.award}</span>
+            {scientist.awards.length > 0 && (
+              <span className="bio-widget-award">
+                🏅 {formatAwards(scientist.awards)}
+              </span>
             )}
           </div>
         </div>
